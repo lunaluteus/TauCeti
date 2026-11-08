@@ -10,8 +10,10 @@ public import TauCeti.Analysis.PDE.Yamabe.SphereConstant
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.Analysis.PDE.Yamabe.Bubble.Cutoff
+import TauCeti.Analysis.SpecialFunctions.Pow.Real
 import TauCeti.Geometry.Manifold.ContMDiff.ChartCutoff
 import TauCeti.Geometry.Manifold.Riemannian.VolumeDensity.Volume
+import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 
 /-!
 # The Yamabe quotient is at most the Yamabe constant of the sphere
@@ -136,32 +138,6 @@ private lemma exists_ball_forall_chart_close [I.Boundaryless] (p : M) {η : ℝ}
   rw [φ.right_inv hyt] at h
   exact h hf
 
-omit [T2Space M] [SigmaCompactSpace M] [MeasurableSpace M] [BorelSpace M]
-  [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)]
-  [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)] in
-/-- Coordinates at `p` which are orthonormal for the metric at `p`: a continuous linear
-equivalence `L` of the model space with Euclidean space, matching the metric at `p` through an
-isometry `O` of the tangent space, and carrying the coordinate Haar measure to the Euclidean
-volume divided by the chart density at `p`. -/
-private lemma exists_equiv_map_addHaar_eq_smul_volume (p : M) :
-    ∃ L : E ≃L[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E)),
-      (∃ O : TangentSpace I p ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E)),
-        ∀ ξ : TangentSpace I p,
-          L ((trivializationAt E (TangentSpace I) p).continuousLinearMapAt ℝ p ξ) = O ξ) ∧
-      Measure.map L (finBasis ℝ E).addHaar =
-        (chartVolumeDensity (I := I) p p)⁻¹.toNNReal • volume := by
-  set e := trivializationAt E (TangentSpace I) p
-  have hp : p ∈ e.baseSet := FiberBundle.mem_baseSet_trivializationAt' p
-  let O : TangentSpace I p ≃ₗᵢ[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E)) :=
-    (stdOrthonormalBasis ℝ (TangentSpace I p)).repr
-  let L : E ≃L[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E)) :=
-    (e.continuousLinearEquivAt ℝ p hp).symm.trans O.toContinuousLinearEquiv
-  have hLapp (w : E) : L w = O (e.symmL ℝ p w) := by
-    simp [L, e.symm_continuousLinearEquivAt_eq hp]
-  refine ⟨L, ⟨O, fun ξ ↦ by rw [hLapp, e.symmL_continuousLinearMapAt hp]⟩, ?_⟩
-  exact map_addHaar_eq_chartVolumeDensity_inv_smul_volume p L fun v w ↦ by
-    rw [hLapp, hLapp, O.inner_map_map]
-
 /-- A Euclidean test function `v` supported in the unit ball, with Sobolev quotient below
 `Y(Sⁿ) + ε / 2`, together with a distortion `η ∈ (0, 1)` for which the bound
 `((1 + η) ³ A + S (1 + η) η ² B) / ((1 - η) ^ (2 / pₙ) D ^ (2 / pₙ))` on the Yamabe quotient of its
@@ -198,104 +174,6 @@ private lemma exists_contDiff_hasCompactSupport_and_distortion {n : ℕ} (hn : 2
     (Filter.Eventually.and (Ioo_mem_nhdsGT one_pos)
       ((hG.mono_left nhdsWithin_le_nhds).eventually_lt_const (by linarith))).exists
   exact ⟨η, hη, hGη⟩
-
-omit [FiniteDimensional ℝ E] in
-/-- The set of points whose rescaled coordinate `Ψ y = t⁻¹ • L (y - x)` lies in the support of a
-function supported in the unit ball is contained in a compact subset of the ball of radius `R`
-around `x`, as soon as `t ‖L⁻¹‖ < R`. -/
-private lemma exists_isCompact_subset_ball_forall_mem_tsupport
-    (L : E ≃L[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E))) (x : E) {t R : ℝ} (ht0 : 0 < t)
-    (htR : t * ‖(L.symm : EuclideanSpace ℝ (Fin (finrank ℝ E)) →L[ℝ] E)‖ < R)
-    {v : EuclideanSpace ℝ (Fin (finrank ℝ E)) → ℝ} (hvc : HasCompactSupport v)
-    (hvsupp : tsupport v ⊆ ball 0 1) {Ψ : E → EuclideanSpace ℝ (Fin (finrank ℝ E))}
-    (hΨ : Ψ = fun y ↦ t⁻¹ • L (y - x)) :
-    ∃ K : Set E, IsCompact K ∧ K ⊆ ball x R ∧ ∀ y, Ψ y ∈ tsupport v → y ∈ K := by
-  set C := ‖(L.symm : EuclideanSpace ℝ (Fin (finrank ℝ E)) →L[ℝ] E)‖
-  have hΨ_eq (y : E) : y = x + L.symm (t • Ψ y) := by
-    simp [hΨ, smul_smul, ht0.ne']
-  refine ⟨(fun z ↦ x + L.symm (t • z)) '' tsupport v, hvc.isCompact.image (by fun_prop), ?_,
-    fun y hy ↦ ⟨Ψ y, hy, (hΨ_eq y).symm⟩⟩
-  rintro _ ⟨z, hz, rfl⟩
-  have hz1 : ‖z‖ < 1 := mem_ball_zero_iff.1 (hvsupp hz)
-  rw [mem_ball, dist_eq_norm, add_sub_cancel_left]
-  calc ‖L.symm (t • z)‖
-      ≤ C * ‖t • z‖ := (L.symm : EuclideanSpace ℝ (Fin (finrank ℝ E)) →L[ℝ] E).le_opNorm _
-    _ = t * C * ‖z‖ := by rw [norm_smul, Real.norm_of_nonneg ht0.le]; ring
-    _ ≤ t * C := mul_le_of_le_one_right (by positivity) hz1.le
-    _ < R := htR
-
-/-- Integrals of functions of the rescaled coordinate `Ψ y = t⁻¹ • L (y - x)` are Euclidean
-integrals scaled by `t ^ n / ρ`, when `L` carries the coordinate Haar measure to `ρ⁻¹` times the
-Euclidean volume. -/
-private lemma integral_comp_rescale_eq {ρ t : ℝ} (hρ : 0 < ρ) (ht0 : 0 < t)
-    (L : E ≃L[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ E)))
-    (hmap : Measure.map L (finBasis ℝ E).addHaar = ρ⁻¹.toNNReal • volume) (x : E)
-    {Ψ : E → EuclideanSpace ℝ (Fin (finrank ℝ E))} (hΨ : Ψ = fun y ↦ t⁻¹ • L (y - x))
-    (k : EuclideanSpace ℝ (Fin (finrank ℝ E)) → ℝ) :
-    ∫ y, k (Ψ y) ∂(finBasis ℝ E).addHaar = ρ⁻¹ * (t ^ finrank ℝ E * ∫ z, k z) := by
-  subst hΨ
-  have h := integral_map_equiv L.toHomeomorph.toMeasurableEquiv (μ := (finBasis ℝ E).addHaar)
-    fun z ↦ k (t⁻¹ • z)
-  simp only [Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph] at h
-  calc ∫ y, k (t⁻¹ • L (y - x)) ∂(finBasis ℝ E).addHaar
-      = ∫ z, k (t⁻¹ • z) ∂Measure.map L (finBasis ℝ E).addHaar := by
-        rw [integral_sub_right_eq_self (fun y ↦ k (t⁻¹ • L y)) x, h]
-    _ = ρ⁻¹ * ∫ z, k (t⁻¹ • z) := by
-        rw [hmap, integral_smul_nnreal_measure]
-        simp [NNReal.smul_def, hρ.le]
-    _ = ρ⁻¹ * (t ^ finrank ℝ E * ∫ z, k z) := by
-        rw [Measure.integral_comp_inv_smul_of_nonneg _ _ ht0.le, finrank_euclideanSpace_fin,
-          smul_eq_mul]
-
-/-- A continuous function of the rescaled coordinate `Ψ`, vanishing outside a set `T`, is
-integrable and supported in the ball of radius `R`, when the preimage of `T` under the continuous
-map `Ψ` lies in a compact subset of that ball. -/
-private lemma integrable_comp_and_support_subset_ball {R : ℝ} {x : E}
-    {Ψ : E → EuclideanSpace ℝ (Fin (finrank ℝ E))} (hΨc : Continuous Ψ) {K : Set E}
-    (hK : IsCompact K) (hKR : K ⊆ ball x R) {T : Set (EuclideanSpace ℝ (Fin (finrank ℝ E)))}
-    (hΨK : ∀ y, Ψ y ∈ T → y ∈ K) {k : EuclideanSpace ℝ (Fin (finrank ℝ E)) → ℝ}
-    (hk : Continuous k) (hkz : ∀ z ∉ T, k z = 0) :
-    Integrable (fun y ↦ k (Ψ y)) (finBasis ℝ E).addHaar ∧
-      Function.support (fun y ↦ k (Ψ y)) ⊆ ball x R :=
-  ⟨(hk.comp hΨc).integrable_of_hasCompactSupport
-    (HasCompactSupport.intro hK fun y hy ↦ hkz _ fun h ↦ hy (hΨK y h)),
-    fun y hy ↦ hKR (hΨK y (by_contra fun h ↦ hy (hkz _ h)))⟩
-
-omit [FiniteDimensional ℝ E] [SigmaCompactSpace M] [MeasurableSpace M] [BorelSpace M]
-  [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
-  [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)]
-  [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)] in
-/-- A smooth nonnegative function on the model space supported in a compact subset `K` of a
-coordinate ball, transplanted to the manifold: it is a smooth nonnegative compactly supported
-function whose support lies in any `U` containing the chart preimage of the ball, and which agrees
-with `w` in the chart. -/
-private lemma exists_contMDiff_transplant (p : M) {R : ℝ} {U : Set M}
-    (hballt : ball (extChartAt I p p) R ⊆ (extChartAt I p).target)
-    (hballU : ∀ y ∈ ball (extChartAt I p p) R, (extChartAt I p).symm y ∈ U) {K : Set E}
-    (hK : IsCompact K) (hKR : K ⊆ ball (extChartAt I p p) R) {w : E → ℝ}
-    (hw : ContDiff ℝ ∞ w) (hw0 : ∀ y, 0 ≤ w y) (hwK : tsupport w ⊆ K) :
-    ∃ u : M → ℝ, ContMDiff I 𝓘(ℝ) ∞ u ∧ HasCompactSupport u ∧ tsupport u ⊆ U ∧
-      (∀ x, 0 ≤ u x) ∧
-      (∀ x ∈ tsupport u, x ∈ (extChartAt I p).source ∧
-        extChartAt I p x ∈ ball (extChartAt I p p) R) ∧
-      ∀ y ∈ ball (extChartAt I p p) R, u ((extChartAt I p).symm y) = w y := by
-  set φ := extChartAt I p
-  obtain ⟨u, hu, huc, htsupp, hu_symm⟩ := exists_contMDiff_comp_extChartAt_symm_eq (c := p) hw
-    (HasCompactSupport.intro hK fun y hy ↦ image_eq_zero_of_notMem_tsupport fun h ↦
-      hy (hwK h)) (hwK.trans (hKR.trans hballt))
-  have hsup (x : M) (hx : x ∈ tsupport u) : x ∈ φ.source ∧ φ x ∈ ball (φ p) R := by
-    obtain ⟨y, hy, rfl⟩ := htsupp hx
-    have hyt := hballt (hKR (hwK hy))
-    exact ⟨φ.map_target hyt, by rw [φ.right_inv hyt]; exact hKR (hwK hy)⟩
-  refine ⟨u, hu, huc, fun x hx ↦ ?_, fun x ↦ ?_, hsup, fun y hy ↦ hu_symm y (hballt hy)⟩
-  · obtain ⟨hxs, hxb⟩ := hsup x hx
-    have h := hballU _ hxb
-    rwa [φ.left_inv hxs] at h
-  · by_cases hx : x ∈ tsupport u
-    · obtain ⟨y, hy, rfl⟩ := htsupp hx
-      rw [hu_symm y (hballt (hKR (hwK hy)))]
-      exact hw0 _
-    · rw [image_eq_zero_of_notMem_tsupport hx]
 
 omit [T2Space M] [SigmaCompactSpace M] [MeasurableSpace M] [BorelSpace M]
   [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)]
@@ -397,7 +275,8 @@ private lemma integral_norm_mgradient_sq_le (p : M) {R t η : ℝ} (hn : 2 < fin
   field_simp
 
 omit [T2Space M] [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)] in
-/-- The `L²` norm of the transplant `u` is at most `(1 + η) t ^ n` times that of `v`. -/
+/-- The squared `L²` norm `∫ u ^ 2` of the transplant `u` is at most `(1 + η) t ^ n` times that of
+`v`. -/
 private lemma integral_sq_le (p : M) {R t η : ℝ} (ht0 : 0 < t) (hη0 : 0 < η)
     (hρp : 0 < chartVolumeDensity (I := I) p p)
     (hballt : ball (extChartAt I p p) R ⊆ (extChartAt I p).target)
@@ -477,7 +356,7 @@ private lemma le_integral_abs_rpow {R t η : ℝ} (p : M) (hn : 2 < finrank ℝ 
   field_simp
 
 /-- The Yamabe numerator of the transplant `u` is controlled by the bounds on its Dirichlet energy
-and `L²` norm, where the scalar curvature is at most `S` on the support of `u`. -/
+and squared `L²` norm, where the scalar curvature is at most `S` on the support of `u`. -/
 private lemma integral_numerator_le (p : M) {R t η a S J B : ℝ} {u : M → ℝ}
     (hn : 2 < finrank ℝ E) (ha : 0 ≤ a) (hS : 0 ≤ S) (hu : ContMDiff I 𝓘(ℝ) ∞ u)
     (huc : HasCompactSupport u)
@@ -550,32 +429,13 @@ private lemma rpow_two_div_criticalExponent_le {n : ℕ} (hn : 2 < n) {η t D J 
         rw [Real.mul_rpow (by positivity) hD.le, Real.mul_rpow hη1'.le (by positivity), htP]
     _ ≤ _ := Real.rpow_le_rpow (by positivity) hIP (by positivity)
 
-/-- The final estimate of the Yamabe quotient of the transplant: the numerator and denominator
-bounds give a quotient at most the distortion bound, using `t ≤ η`. -/
-private lemma div_rpow_le_distortion_bound {n : ℕ} {P η t S A B D N J : ℝ} (hη1 : η < 1)
-    (ht0 : 0 < t) (htη : t ≤ η) (hS : 0 ≤ S) (hA : 0 ≤ A) (hB : 0 ≤ B) (hD : 0 < D)
-    (hnum : N ≤ t ^ (n - 2) * ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B))
-    (hden : (1 - η) ^ (2 / P) * t ^ (n - 2) * D ^ (2 / P) ≤ J ^ (2 / P)) :
-    N / J ^ (2 / P) ≤
-      ((1 + η) ^ 3 * A + S * (1 + η) * η ^ 2 * B) / ((1 - η) ^ (2 / P) * D ^ (2 / P)) := by
-  have hη1' := sub_pos.2 hη1
-  have hη0 : 0 < η := ht0.trans_le htη
-  calc N / J ^ (2 / P)
-      ≤ t ^ (n - 2) * ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B) /
-        ((1 - η) ^ (2 / P) * t ^ (n - 2) * D ^ (2 / P)) :=
-        div_le_div₀ (by positivity) hnum (by positivity) hden
-    _ = ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B) / ((1 - η) ^ (2 / P) * D ^ (2 / P)) := by
-        have : t ^ (n - 2) ≠ 0 := pow_ne_zero _ ht0.ne'
-        field_simp
-    _ ≤ _ := by gcongr
-
 omit [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)] in
 /-- **The transplanted test function.** Given orthonormal coordinates `L` at `p` (see
-`exists_equiv_map_addHaar_eq_smul_volume`), a Euclidean test function `v` supported in the unit
-ball and a scale `t` with `t ‖L⁻¹‖ < R`, the function `v (t⁻¹ • L (· - φ p))` transplants to a
+`TauCeti.exists_equiv_map_addHaar_eq_smul_volume`), a Euclidean test function `v` supported in the
+unit ball and a scale `t` with `t ‖L⁻¹‖ < R`, the function `v (t⁻¹ • L (· - φ p))` transplants to a
 smooth nonnegative compactly supported function `u` on `M`, supported in `U`, with Dirichlet energy
-and `L²` norm at most `(1 + η) ³ t ^ (n - 2)` and `(1 + η) t ^ n` times those of `v`, and critical
-mass at least `(1 - η) t ^ n` times that of `v`, where the density and the metric are
+and squared `L²` norm at most `(1 + η) ³ t ^ (n - 2)` and `(1 + η) t ^ n` times those of `v`, and
+critical mass at least `(1 - η) t ^ n` times that of `v`, where the density and the metric are
 `η`-close to their values at `p` on the chart ball of radius `R`. -/
 private lemma exists_transplant_bounds (p : M) {R t η : ℝ} {U : Set M} (hn : 2 < finrank ℝ E)
     (hη0 : 0 < η) (hη1 : η < 1) (ht0 : 0 < t) (hρp : 0 < chartVolumeDensity (I := I) p p)
@@ -618,12 +478,20 @@ private lemma exists_transplant_bounds (p : M) {R t η : ℝ} {U : Set M} (hn : 
     (closure_minimal (fun y hy ↦ hΨK y (subset_tsupport _ hy)) hK.isClosed)
   have hint : ∀ k : EuclideanSpace ℝ (Fin (finrank ℝ E)) → ℝ, Continuous k →
       (∀ z ∉ tsupport v, k z = 0) → Integrable (fun y ↦ k (Ψ y)) (finBasis ℝ E).addHaar :=
-    fun k hk hkz ↦ (integrable_comp_and_support_subset_ball hΨc hK hKR hΨK hk hkz).1
+    fun k hk hkz ↦
+      (integrable_comp_and_support_subset_ball (μ := (finBasis ℝ E).addHaar) hΨc hK hKR hΨK hk
+        hkz).1
   have hsb : ∀ k : EuclideanSpace ℝ (Fin (finrank ℝ E)) → ℝ, Continuous k →
       (∀ z ∉ tsupport v, k z = 0) →
         Function.support (fun y ↦ k (Ψ y)) ⊆ ball (extChartAt I p p) R :=
-    fun k hk hkz ↦ (integrable_comp_and_support_subset_ball hΨc hK hKR hΨK hk hkz).2
-  have hcv := integral_comp_rescale_eq hρp ht0 L hmap (extChartAt I p p) hΨ
+    fun k hk hkz ↦
+      (integrable_comp_and_support_subset_ball (μ := (finBasis ℝ E).addHaar) hΨc hK hKR hΨK hk
+        hkz).2
+  have hcv (k : EuclideanSpace ℝ (Fin (finrank ℝ E)) → ℝ) :
+      ∫ y, k (Ψ y) ∂(finBasis ℝ E).addHaar =
+        (chartVolumeDensity (I := I) p p)⁻¹ * (t ^ finrank ℝ E * ∫ z, k z) := by
+    simpa only [finrank_euclideanSpace_fin] using
+      integral_comp_rescale_eq (μ := (finBasis ℝ E).addHaar) hρp ht0 L hmap (extChartAt I p p) hΨ k
   exact ⟨u, hu, huc, huU, hu0, hsup,
     integral_norm_mgradient_sq_le p hn ht0 hη0 hρp hballt hv hu huc hsup
       (fun y hy ↦ (hρ y hy).2)
@@ -671,7 +539,7 @@ theorem exists_contMDiff_hasCompactSupport_yamabeQuotient_lt [I.Boundaryless]
   refine ⟨u, hu, huc, huU, hu0, (by positivity : 0 < (1 - η) * t ^ finrank ℝ E *
     ∫ z, |v z| ^ criticalExponent (finrank ℝ E)).trans_le hIP, ?_⟩
   rw [yamabeQuotient_def]
-  exact (div_rpow_le_distortion_bound hη1 ht0 htη (by positivity)
+  exact (Real.div_rpow_le_distortion_bound hη1 ht0 htη (by positivity)
     (mul_nonneg (conformalCoefficient_pos hn).le (integral_nonneg fun _ ↦ sq_nonneg _))
     (integral_nonneg fun _ ↦ sq_nonneg _) hD hnum hden).trans_lt hGη
 

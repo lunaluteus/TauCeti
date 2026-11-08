@@ -63,6 +63,11 @@ For nonnegative `a`, `C`, `I` and `q > 0`, a bound `a ≤ C * I ^ (1 / q)` is eq
 `q`-th power `a ^ q ≤ C ^ q * I`. This is how a domination estimate by an `L^q` norm is compared
 with the corresponding integral of `q`-th powers.
 
+A quotient `N / J ^ q`, whose numerator is at most `t ^ m` times a distortion-inflated quantity
+and whose denominator satisfies `(1 - η) ^ q t ^ m D ^ q ≤ J ^ q`, is bounded by the quotient of the
+distortion-inflated quantities. This is the last step in comparing a Rayleigh-type quotient of a
+rescaled test function with that of the unscaled one.
+
 ## Main results
 
 * `Real.inv_sqrt_eq_rpow`: `(√x)⁻¹ = x ^ (-2⁻¹)` for every real `x`.
@@ -88,6 +93,9 @@ with the corresponding integral of `q`-th powers.
 * `Real.rpow_le_exp_neg_mul`: `A ^ c ≤ e^{-c t}` when `0 ≤ A ≤ e^{-t}` and `0 ≤ c`.
 * `Real.le_mul_rpow_one_div_iff`: `a ≤ C * I ^ (1 / q) ↔ a ^ q ≤ C ^ q * I` for nonnegative
   `a`, `C`, `I` and `0 < q`.
+* `Real.div_rpow_le_distortion_bound`: the quotient `N / J ^ q` is at most
+  `((1 + η) ³ A + S (1 + η) η² B) / ((1 - η) ^ q D ^ q)` from the numerator and denominator
+  bounds of a distortion `η ≥ t`.
 * `Function.HasFiniteSupport.hasFiniteMulSupport_fun_rpow`: real powers with finitely supported
   exponents have finite multiplicative support.
 * `Real.rpow_finsum_of_pos`: `a ^ (∑ᶠ i, f i) = ∏ᶠ i, a ^ f i` for `0 < a` and finitely supported
@@ -232,6 +240,26 @@ theorem tendsto_pow_div_mul_sub_pow_atTop {n : ℕ} {ω : ℝ} (hn0 : n ≠ 0) (
     exact (sub_pos.2 this).ne'
   rw [div_pow, one_sub_div (pow_pos hD0 n).ne', inv_div]
   field_simp
+
+/-- A quotient estimate with distortion `η`: if `N ≤ t ^ m ((1 + η) ³ A + S (1 + η) t² B)` and
+`(1 - η) ^ q t ^ m D ^ q ≤ J ^ q`, then, using `t ≤ η`,
+`N / J ^ q ≤ ((1 + η) ³ A + S (1 + η) η² B) / ((1 - η) ^ q D ^ q)`. -/
+theorem div_rpow_le_distortion_bound {m : ℕ} {q η t S A B D N J : ℝ} (hη1 : η < 1)
+    (ht0 : 0 < t) (htη : t ≤ η) (hS : 0 ≤ S) (hA : 0 ≤ A) (hB : 0 ≤ B) (hD : 0 < D)
+    (hnum : N ≤ t ^ m * ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B))
+    (hden : (1 - η) ^ q * t ^ m * D ^ q ≤ J ^ q) :
+    N / J ^ q ≤
+      ((1 + η) ^ 3 * A + S * (1 + η) * η ^ 2 * B) / ((1 - η) ^ q * D ^ q) := by
+  have hη1' := sub_pos.2 hη1
+  have hη0 : 0 < η := ht0.trans_le htη
+  calc N / J ^ q
+      ≤ t ^ m * ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B) /
+        ((1 - η) ^ q * t ^ m * D ^ q) :=
+        div_le_div₀ (by positivity) hnum (by positivity) hden
+    _ = ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B) / ((1 - η) ^ q * D ^ q) := by
+        have : t ^ m ≠ 0 := pow_ne_zero _ ht0.ne'
+        field_simp
+    _ ≤ _ := by gcongr
 
 end Real
 

@@ -6,10 +6,14 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Pow
+import Mathlib.MeasureTheory.Function.LocallyIntegrable
+import Mathlib.MeasureTheory.Group.Integral
+import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
 import Mathlib.MeasureTheory.Measure.Real
 import Mathlib.RingTheory.Norm.Transitivity
 import TauCeti.MeasureTheory.Measure.OpenPos
@@ -36,6 +40,11 @@ invertible affine map `x ↦ c + A x` pushes it to its multiple by `|det A|⁻¹
 measure of the image of the closed unit ball under a linear endomorphism `f` with that of the
 closed ball of radius `‖f‖` bounds `|det f|` by `‖f‖` raised to the dimension; restricting scalars
 to `ℝ` gives the same bound for `‖det f‖` over `ℂ`, or any `RCLike` field.
+
+For a continuous linear equivalence `L` and a scale `t`, the rescaled coordinate
+`t⁻¹ • L (y - x)` turns integrals of functions of it into integrals over the target scaled by
+`tⁿ / ρ`, when `L` carries the measure to `ρ⁻¹` times a Haar measure of the target; the points whose
+rescaled coordinate lies in a ball-supported set lie in a compact subset of a small ball.
 
 ## Main results
 
@@ -87,6 +96,13 @@ to `ℝ` gives the same bound for `‖det f‖` over `ℂ`, or any `RCLike` fiel
 * `ContinuousLinearMap.abs_det_le_opNorm_pow`: `|det f| ≤ ‖f‖ ^ n` in dimension `n`.
 * `ContinuousLinearMap.norm_det_le_opNorm_pow`: `‖det f‖ ≤ ‖f‖ ^ n` in dimension `n` over an
   `RCLike` field.
+* `TauCeti.exists_isCompact_subset_ball_forall_mem_tsupport`: the points whose rescaled coordinate
+  lies in the support of a function supported in the unit ball lie in a compact subset of a ball.
+* `TauCeti.integral_comp_rescale_eq`: integrals of functions of the rescaled coordinate are the
+  target integrals scaled by `tⁿ / ρ`.
+* `TauCeti.integrable_comp_and_support_subset_ball`: a continuous function of a coordinate map
+  vanishing outside a set whose preimage lies in a compact subset of a ball is integrable and
+  supported in that ball.
 -/
 
 public section
@@ -440,6 +456,68 @@ theorem _root_.ContinuousLinearMap.norm_det_le_opNorm_pow {𝕜 E : Type*} [RCLi
   rw [hdet, RCLike.abs_algebraNorm_eq_norm_pow, ContinuousLinearMap.norm_restrictScalars,
     ← finrank_mul_finrank ℝ 𝕜 E, pow_mul'] at h
   exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) finrank_pos.ne').1 h
+
+section Rescale
+
+variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [NormedAddCommGroup F]
+  [NormedSpace ℝ F]
+
+/-- The set of points whose rescaled coordinate `Ψ y = t⁻¹ • L (y - x)` lies in the support of a
+function supported in the unit ball is contained in a compact subset of the ball of radius `R`
+around `x`, as soon as `t ‖L⁻¹‖ < R`. -/
+theorem exists_isCompact_subset_ball_forall_mem_tsupport (L : E ≃L[ℝ] F) (x : E) {t R : ℝ}
+    (ht0 : 0 < t) (htR : t * ‖(L.symm : F →L[ℝ] E)‖ < R) {v : F → ℝ} (hvc : HasCompactSupport v)
+    (hvsupp : tsupport v ⊆ ball 0 1) {Ψ : E → F} (hΨ : Ψ = fun y ↦ t⁻¹ • L (y - x)) :
+    ∃ K : Set E, IsCompact K ∧ K ⊆ ball x R ∧ ∀ y, Ψ y ∈ tsupport v → y ∈ K := by
+  set C := ‖(L.symm : F →L[ℝ] E)‖
+  have hΨ_eq (y : E) : y = x + L.symm (t • Ψ y) := by
+    simp [hΨ, smul_smul, ht0.ne']
+  refine ⟨(fun z ↦ x + L.symm (t • z)) '' tsupport v, hvc.isCompact.image (by fun_prop), ?_,
+    fun y hy ↦ ⟨Ψ y, hy, (hΨ_eq y).symm⟩⟩
+  rintro _ ⟨z, hz, rfl⟩
+  have hz1 : ‖z‖ < 1 := mem_ball_zero_iff.1 (hvsupp hz)
+  rw [mem_ball, dist_eq_norm, add_sub_cancel_left]
+  calc ‖L.symm (t • z)‖
+      ≤ C * ‖t • z‖ := (L.symm : F →L[ℝ] E).le_opNorm _
+    _ = t * C * ‖z‖ := by rw [norm_smul, Real.norm_of_nonneg ht0.le]; ring
+    _ ≤ t * C := mul_le_of_le_one_right (by positivity) hz1.le
+    _ < R := htR
+
+/-- Integrals of functions of the rescaled coordinate `Ψ y = t⁻¹ • L (y - x)` are integrals over
+the target scaled by `t ^ n / ρ`, when `L` carries the measure `μ` to `ρ⁻¹` times a Haar measure
+`ν` of the target (here `n` is the dimension of the target). -/
+theorem integral_comp_rescale_eq [FiniteDimensional ℝ F] [MeasurableSpace E] [BorelSpace E]
+    [MeasurableSpace F] [BorelSpace F] {μ : Measure E} [μ.IsAddRightInvariant]
+    {ν : Measure F} [ν.IsAddHaarMeasure] {ρ t : ℝ} (hρ : 0 < ρ) (ht0 : 0 < t) (L : E ≃L[ℝ] F)
+    (hmap : Measure.map L μ = ρ⁻¹.toNNReal • ν) (x : E) {Ψ : E → F}
+    (hΨ : Ψ = fun y ↦ t⁻¹ • L (y - x)) (k : F → ℝ) :
+    ∫ y, k (Ψ y) ∂μ = ρ⁻¹ * (t ^ finrank ℝ F * ∫ z, k z ∂ν) := by
+  subst hΨ
+  have h := integral_map_equiv L.toHomeomorph.toMeasurableEquiv (μ := μ) fun z ↦ k (t⁻¹ • z)
+  simp only [Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph] at h
+  calc ∫ y, k (t⁻¹ • L (y - x)) ∂μ
+      = ∫ z, k (t⁻¹ • z) ∂Measure.map L μ := by
+        rw [integral_sub_right_eq_self (fun y ↦ k (t⁻¹ • L y)) x, h]
+    _ = ρ⁻¹ * ∫ z, k (t⁻¹ • z) ∂ν := by
+        rw [hmap, integral_smul_nnreal_measure]
+        simp [NNReal.smul_def, hρ.le]
+    _ = ρ⁻¹ * (t ^ finrank ℝ F * ∫ z, k z ∂ν) := by
+        rw [Measure.integral_comp_inv_smul_of_nonneg _ _ ht0.le, smul_eq_mul]
+
+omit [NormedSpace ℝ E] [NormedSpace ℝ F] in
+/-- A continuous function of the rescaled coordinate `Ψ`, vanishing outside a set `T`, is
+integrable and supported in the ball of radius `R`, when the preimage of `T` under the continuous
+map `Ψ` lies in a compact subset of that ball. -/
+theorem integrable_comp_and_support_subset_ball [MeasurableSpace E] [OpensMeasurableSpace E]
+    {μ : Measure E} [IsFiniteMeasureOnCompacts μ] {R : ℝ} {x : E} {Ψ : E → F}
+    (hΨc : Continuous Ψ) {K : Set E} (hK : IsCompact K) (hKR : K ⊆ ball x R) {T : Set F}
+    (hΨK : ∀ y, Ψ y ∈ T → y ∈ K) {k : F → ℝ} (hk : Continuous k) (hkz : ∀ z ∉ T, k z = 0) :
+    Integrable (fun y ↦ k (Ψ y)) μ ∧ Function.support (fun y ↦ k (Ψ y)) ⊆ ball x R :=
+  ⟨(hk.comp hΨc).integrable_of_hasCompactSupport
+    (HasCompactSupport.intro hK fun y hy ↦ hkz _ fun h ↦ hy (hΨK y h)),
+    fun y hy ↦ hKR (hΨK y (by_contra fun h ↦ hy (hkz _ h)))⟩
+
+end Rescale
 
 end TauCeti
 
