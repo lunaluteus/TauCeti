@@ -46,6 +46,8 @@ an affine parametrization with a segment whose terminal endpoint is removed.
 ## Main results
 
 * `Set.convexSegment` — an affine segment in a convex set, clamped to `[0, 1]`.
+* `Set.image_comp_lineMap_uIcc_zero_one` — reparametrizing a function on `[a, b]` by `lineMap a b`
+  from `[0, 1]` does not change its image.
 * `TauCeti.mem_segment_zero_left_iff_sameRay_and_norm_le` —
   `m ∈ [0 -[ℝ] w] ↔ SameRay ℝ m w ∧ ‖m‖ ≤ ‖w‖`. Both conjuncts are needed.
 * `TauCeti.eq_of_mem_segment_zero_left_of_norm_eq` — the norm separates the points of `[0, w]`.
@@ -123,6 +125,12 @@ theorem convexSegment_one (hs : Convex 𝕜 s) (x y : s) :
   simp
 
 end ClampedSegment
+
+/-- Reparametrizing a function on `[a, b]` by `lineMap a b` from `[0, 1]` does not change the
+image. -/
+theorem image_comp_lineMap_uIcc_zero_one {α : Type*} (f : ℝ → α) (a b : ℝ) :
+    (f ∘ AffineMap.lineMap a b) '' uIcc (0 : ℝ) 1 = f '' uIcc a b := by
+  rw [image_comp, uIcc_of_le zero_le_one, ← segment_eq_image_lineMap, segment_eq_uIcc]
 
 end Set
 
