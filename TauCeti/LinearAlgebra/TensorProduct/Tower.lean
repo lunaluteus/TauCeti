@@ -76,3 +76,12 @@ theorem TensorProduct.tmul_eq_one_tmul_smul_of_mem {R M : Type*} [CommRing R] [A
     [Module R M] {B : Subring R} {r : R} (hr : r ∈ B) (m : M) :
     r ⊗ₜ[B] m = (1 : R) ⊗ₜ (r • m) := by
   simpa [Subring.smul_def] using smul_tmul (⟨r, hr⟩ : B) (1 : R) m
+
+/-- Base change preserves left inverses: if `f ∘ₗ g = id`, then `f.baseChange A` is a left
+inverse of `g.baseChange A`. -/
+theorem LinearMap.baseChange_leftInverse {R A M N : Type*} [CommSemiring R] [CommSemiring A]
+    [Algebra R A] [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
+    {f : N →ₗ[R] M} {g : M →ₗ[R] N} (h : f ∘ₗ g = .id) :
+    Function.LeftInverse (f.baseChange A) (g.baseChange A) := fun z ↦ by
+  rw [← LinearMap.comp_apply, ← LinearMap.baseChange_comp, h, LinearMap.baseChange_id,
+    LinearMap.id_apply]
