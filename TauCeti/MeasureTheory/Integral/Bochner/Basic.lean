@@ -73,6 +73,13 @@ for set and probability integrals.
 * `integral_max_sub_sq_le_mul_measureReal` bounds the integral of the squared truncation
   `((f - l)⁺)²` of a function `f ≤ M` by `(M - l)²` times the measure of `{l ≤ f}`.
 
+## Densities
+
+* `MeasureTheory.integral_withDensity_ofReal` and
+  `MeasureTheory.integrable_withDensity_ofReal_iff`: integrals and integrability against the
+  measure with density `ENNReal.ofReal ∘ h` reduce to weighting the integrand by `h`, for `h`
+  almost everywhere nonnegative and almost everywhere measurable.
+
 ## `L¹` convergence
 
 `L¹` convergence is often produced in the Bochner form `∫ ω, ‖f i ω - g ω‖ ∂μ → 0` but consumed
@@ -562,29 +569,29 @@ end TauCeti
 
 namespace MeasureTheory
 
-variable {α : Type*} [MeasurableSpace α] {ν : Measure α} {g : α → ℝ}
+variable {α : Type*} [MeasurableSpace α] {ν : Measure α} {h : α → ℝ}
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- Integrating against the measure with density `1 / g` divides the integrand by `g`, for `g`
-almost everywhere nonnegative with measurable reciprocal. -/
-theorem integral_withDensity_ofReal_inv (hg : ∀ᵐ x ∂ν, 0 ≤ g x)
-    (hi : AEMeasurable (fun x ↦ (g x)⁻¹) ν) (f : α → ℝ) :
-    ∫ x, f x ∂ν.withDensity (fun x ↦ ENNReal.ofReal (g x)⁻¹) = ∫ x, f x / g x ∂ν := by
-  rw [integral_withDensity_eq_integral_toReal_smul₀
-    hi.ennreal_ofReal (by simp)]
+/-- Integrating against the measure with density `ofReal ∘ h` weights the integrand by `h`, for
+`h` almost everywhere nonnegative and almost everywhere measurable. -/
+theorem integral_withDensity_ofReal (hh : ∀ᵐ x ∂ν, 0 ≤ h x) (hm : AEMeasurable h ν)
+    (f : α → E) :
+    ∫ x, f x ∂ν.withDensity (fun x ↦ ENNReal.ofReal (h x)) = ∫ x, h x • f x ∂ν := by
+  rw [integral_withDensity_eq_integral_toReal_smul₀ hm.ennreal_ofReal (by simp)]
   refine integral_congr_ae ?_
-  filter_upwards [hg] with x hx
-  simp [ENNReal.toReal_ofReal (inv_nonneg.mpr hx), div_eq_mul_inv, mul_comm]
+  filter_upwards [hh] with x hx
+  simp [ENNReal.toReal_ofReal hx]
 
-/-- A function is integrable against the measure with density `1 / g` exactly when its quotient
-by `g` is integrable, for `g` almost everywhere nonnegative with measurable reciprocal. -/
-theorem integrable_withDensity_ofReal_inv_iff (hg : ∀ᵐ x ∂ν, 0 ≤ g x)
-    (hi : AEMeasurable (fun x ↦ (g x)⁻¹) ν) {f : α → ℝ} :
-    Integrable f (ν.withDensity (fun x ↦ ENNReal.ofReal (g x)⁻¹)) ↔
-      Integrable (fun x ↦ f x / g x) ν := by
-  rw [integrable_withDensity_iff_integrable_smul₀'
-    hi.ennreal_ofReal (by simp)]
+/-- A function is integrable against the measure with density `ofReal ∘ h` exactly when its
+weighting by `h` is integrable, for `h` almost everywhere nonnegative and almost everywhere
+measurable. -/
+theorem integrable_withDensity_ofReal_iff (hh : ∀ᵐ x ∂ν, 0 ≤ h x) (hm : AEMeasurable h ν)
+    {f : α → E} :
+    Integrable f (ν.withDensity (fun x ↦ ENNReal.ofReal (h x))) ↔
+      Integrable (fun x ↦ h x • f x) ν := by
+  rw [integrable_withDensity_iff_integrable_smul₀' hm.ennreal_ofReal (by simp)]
   refine integrable_congr ?_
-  filter_upwards [hg] with x hx
-  simp [ENNReal.toReal_ofReal (inv_nonneg.mpr hx), div_eq_mul_inv, mul_comm]
+  filter_upwards [hh] with x hx
+  simp [ENNReal.toReal_ofReal hx]
 
 end MeasureTheory
