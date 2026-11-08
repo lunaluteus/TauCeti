@@ -16,7 +16,7 @@ public import Mathlib.Data.Finset.Range
 A set defined by a condition `Φ` on the tuple of values of a family of functions is the union,
 over the tuples satisfying `Φ`, of the fibres of the family over those tuples.
 
-For a strictly monotone reindexing `σ` of pairwise disjoint sets `B`, the union `⋃ j, B (σ j)`
+For an injective reindexing `σ` of pairwise disjoint sets `B`, the union `⋃ j, B (σ j)`
 splits into the earlier sets, the `k`-th set and the later sets, and these pieces are disjoint.
 
 ## Main results
@@ -42,15 +42,15 @@ theorem setOf_apply_eq_biUnion_iInter {α β ι : Type*} (g : ι → α → β) 
   simp only [mem_ofPred_eq, mem_iUnion, mem_iInter, exists_prop]
   exact ⟨fun h => ⟨_, h, fun _ => rfl⟩, fun ⟨ε, hε, h⟩ => (funext h).symm ▸ hε⟩
 
-/-- For a strictly monotone `σ` and pairwise disjoint sets `B`, the union `⋃ j, B (σ j)` splits
+/-- For an injective `σ` and pairwise disjoint sets `B`, the union `⋃ j, B (σ j)` splits
 into the earlier sets, the `k`-th set and the later sets, and these three pieces are disjoint. -/
 theorem iUnion_comp_eq_union_of_pairwise_disjoint {α : Type*} {B : ℕ → Set α}
-    (hB : Pairwise (Disjoint on B)) {σ : ℕ → ℕ} (hσ : StrictMono σ) (k : ℕ) :
+    (hB : Pairwise (Disjoint on B)) {σ : ℕ → ℕ} (hσ : Function.Injective σ) (k : ℕ) :
     ⋃ j, B (σ j) = (⋃ i ∈ Finset.range k, B (σ i)) ∪ (B (σ k) ∪ ⋃ i, ⋃ (_ : k < i), B (σ i)) ∧
     Disjoint (⋃ i ∈ Finset.range k, B (σ i)) (B (σ k) ∪ ⋃ i, ⋃ (_ : k < i), B (σ i)) ∧
     Disjoint (B (σ k)) (⋃ i, ⋃ (_ : k < i), B (σ i)) := by
   have hdisj (i i' : ℕ) (hii' : i ≠ i') : Disjoint (B (σ i)) (B (σ i')) :=
-    hB (hσ.injective.ne hii')
+    hB (hσ.ne hii')
   refine ⟨?_, ?_, ?_⟩
   · ext x
     simp only [mem_union, mem_iUnion, Finset.mem_range, exists_prop]
