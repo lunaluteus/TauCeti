@@ -17,7 +17,9 @@ records that reindexing as a measurable equivalence, together with the restricti
 subblock.
 
 It also records that extending a family along an arbitrary map of index types, with a fixed
-default outside the range, is measurable in the family (`TauCeti.MeasureTheory.measurable_extend`).
+default outside the range, is measurable in the family
+(`TauCeti.MeasureTheory.measurable_extend`), and that reading a family along an arbitrary map of
+index types is measurable in the family (`TauCeti.MeasureTheory.measurable_comp_apply`).
 
 These are general measurable product constructions, independent of any measure or stochastic
 process.
@@ -84,6 +86,12 @@ theorem measurable_extend {ι κ : Type*} (f : ι → κ) (e : κ → α) :
   refine Measurable.of_eval fun k ↦ ?_
   simp only [Function.extend]
   split_ifs <;> fun_prop
+
+/-- Reading a family `u : κ → α` along a map `e : ι → κ`, that is, precomposing with `e`, is
+measurable in `u`. -/
+theorem measurable_comp_apply {ι κ : Type*} (e : ι → κ) :
+    Measurable fun (u : κ → α) (a : ι) ↦ u (e a) :=
+  Measurable.of_eval fun a ↦ measurable_pi_apply (e a)
 
 end MeasureTheory
 
