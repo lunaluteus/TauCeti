@@ -412,7 +412,7 @@ omit [Finite Q] in
 /-- **The path algebra is the internal direct sum of its weight pieces**: the pieces are the spans
 of the fibers of the weight map on the path basis, so this holds for every quiver. -/
 theorem isInternal_gradeBy : DirectSum.IsInternal (gradeBy k wt) := by
-  have h := DirectSum.isInternal_span_image_fiber (pathAlgebraBasis k Q)
+  have h := (pathAlgebraBasis k Q).isInternal_span_image_fiber
     fun x : Quiver.TotalPath Q => x.2.2.addWeight wt
   convert h using 1
   funext m
@@ -755,21 +755,41 @@ instance opGrade.gradedMonoid [Finite Q] : SetLike.GradedMonoid (opGrade k Q) wh
     exact SetLike.mul_mem_graded ((mem_opGrade_iff k Q).1 hy)
       ((mem_opGrade_iff k Q).1 hx)
 
+/-- Transporting an internal direct sum along a linear equivalence gives an internal direct sum. -/
+private theorem isInternal_map_linearEquiv {R M N ι : Type*} [Semiring R] [AddCommMonoid M]
+    [AddCommMonoid N] [Module R M] [Module R N] [DecidableEq ι] {A : ι → Submodule R M}
+    (h : DirectSum.IsInternal A) (e : M ≃ₗ[R] N) :
+    DirectSum.IsInternal fun i => (A i).map e.toLinearMap := by
+  let Φ : (⨁ i, A i) ≃ₗ[R] ⨁ i, (A i).map e.toLinearMap :=
+    DFinsupp.mapRange.linearEquiv fun i => (A i).equivMapOfInjective e.toLinearMap e.injective
+  have hcomp : (DirectSum.coeLinearMap fun i => (A i).map e.toLinearMap) ∘ₗ Φ.toLinearMap =
+      e.toLinearMap ∘ₗ DirectSum.coeLinearMap A := by
+    refine DirectSum.linearMap_ext _ fun i => LinearMap.ext fun x => ?_
+    have hΦ : Φ (DirectSum.lof R ι (fun i => A i) i x) =
+        DirectSum.lof R ι (fun i => (A i).map e.toLinearMap) i
+          ((A i).equivMapOfInjective e.toLinearMap e.injective x) := by
+      simp only [Φ, DirectSum.lof_eq_of]
+      exact DFinsupp.mapRange_single (hf := fun _ => map_zero _)
+    simp [hΦ]
+  -- For submodules, the additive recomposition map in `IsInternal` is the underlying function
+  -- of the canonical linear recomposition map.
+  change Function.Bijective (DirectSum.coeLinearMap fun i => (A i).map e.toLinearMap)
+  have hA : Function.Bijective (DirectSum.coeLinearMap A) := h
+  have : (DirectSum.coeLinearMap fun i => (A i).map e.toLinearMap) =
+      (e.toLinearMap ∘ₗ DirectSum.coeLinearMap A) ∘ₗ Φ.symm.toLinearMap := by
+    rw [← hcomp]; ext x; simp
+  rw [this]
+  exact (e.bijective.comp hA).comp Φ.symm.bijective
+
+/-- The opposite path-length pieces form an internal direct sum. -/
+theorem isInternal_opGrade : DirectSum.IsInternal (opGrade k Q) :=
+  isInternal_map_linearEquiv (isInternal_grade k Q) (MulOpposite.opLinearEquiv k)
+
 end OppositeGrade
 
 section OppositeGradedAlgebra
 
 variable (k : Type w) (Q : Type u) [CommRing k] [Quiver.{v} Q]
-
-/-- The opposite path-length pieces form an internal direct sum. -/
-theorem isInternal_opGrade : DirectSum.IsInternal (opGrade k Q) := by
-  apply DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-  · exact LinearMap.iSupIndep_map _ (MulOpposite.opLinearEquiv k).injective
-      (isInternal_grade k Q).submodule_iSupIndep
-  · unfold opGrade
-    rw [← Submodule.map_iSup,
-      (isInternal_grade k Q).submodule_iSup_eq_top, Submodule.map_top]
-    exact LinearMap.range_eq_top.2 (MulOpposite.opLinearEquiv k).surjective
 
 /-- The ordinary opposite path algebra is graded by path length. -/
 noncomputable instance opGrade.gradedAlgebra [Finite Q] : GradedAlgebra (opGrade k Q) :=

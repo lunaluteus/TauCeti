@@ -56,7 +56,7 @@ of its summands `DirectSum.summand R M i`, the ranges of the inclusions `DirectS
 has `i`-th component `DirectSum.of M i (x i)` (`DirectSum.coe_decompose_summand`).
 
 Over any semiring, the spans of the basis vectors in the fibers of a map on the index set of a basis
-form an internal direct sum (`DirectSum.isInternal_span_image_fiber`).
+form an internal direct sum (`Module.Basis.isInternal_span_image_fiber`).
 -/
 
 public section
@@ -587,11 +587,12 @@ theorem coe_decompose_summand (x : ⨁ i, M i) (i : ι) :
 
 end Module
 
+end DirectSum
 
 /-- **A basis split along the fibers of a map gives an internal direct sum**: if `b` is a basis of
 `M` and `w : ι → κ` is any map of the index type, then the spans of the basis vectors in the fibers
 of `w` form an internal direct sum decomposition of `M`. -/
-theorem isInternal_span_image_fiber {R ι κ M : Type*} [Semiring R] [AddCommMonoid M]
+theorem Module.Basis.isInternal_span_image_fiber {R ι κ M : Type*} [Semiring R] [AddCommMonoid M]
     [Module R M] [DecidableEq κ] (b : Module.Basis ι R M) (w : ι → κ) :
     DirectSum.IsInternal fun c : κ => Submodule.span R (b '' {i | w i = c}) := by
   let A : κ → Submodule R M := fun c => Submodule.span R (b '' {i | w i = c})
@@ -610,6 +611,8 @@ theorem isInternal_span_image_fiber {R ι κ M : Type*} [Semiring R] [AddCommMon
       · rw [DirectSum.of_eq_of_ne _ _ _ (Ne.symm h), hsupp c' a a.2 i fun e => h (e.symm.trans hi)]
         simp
     | add x y hx hy => simp [hx, hy]
+  -- For submodules, the additive recomposition map in `IsInternal` is the underlying function
+  -- of the canonical linear recomposition map.
   change Function.Bijective (DirectSum.coeLinearMap A)
   refine ⟨fun x y hxy => ?_, ?_⟩
   · refine DirectSum.ext fun c => Subtype.ext (b.repr.injective (Finsupp.ext fun i => ?_))
@@ -619,5 +622,3 @@ theorem isInternal_span_image_fiber {R ι κ M : Type*} [Semiring R] [AddCommMon
   · rw [← LinearMap.range_eq_top, eq_top_iff, ← b.span_eq, Submodule.span_le]
     rintro _ ⟨i, rfl⟩
     exact ⟨DirectSum.of (fun c => A c) (w i) ⟨b i, Submodule.subset_span ⟨i, rfl, rfl⟩⟩, by simp⟩
-
-end DirectSum
