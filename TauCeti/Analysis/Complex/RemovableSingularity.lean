@@ -49,7 +49,7 @@ it, are shown to be analytic across it.
 
 public section
 
-open Complex ComplexConjugate Filter Function Metric Real Set Topology
+open Complex Filter Function Metric Real Set Topology
 
 namespace TauCeti
 
