@@ -8,6 +8,8 @@ module
 public import TauCeti.Analysis.PDE.Regularity.Crossover
 public import TauCeti.Analysis.PDE.Regularity.ReverseHolder
 public import TauCeti.Analysis.PDE.Regularity.Supersolution.Lp
+import TauCeti.Analysis.SpecialFunctions.Pow.Real
+import TauCeti.MeasureTheory.Integral.Average
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.OpenPos
 
@@ -87,53 +89,6 @@ namespace PDE
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {mu : Measure (EuclideanSpace ℝ ι)}
   [mu.IsAddHaarMeasure] {lam Lam : ℝ}
 
-/-- If `Ap * An ≤ K'` and `t⁻¹ ≤ D V^{1/p} An^{1/p}` with `t > 0`, then
-`Ap^{1/p} ≤ K'^{1/p} D V^{1/p} t` for `D, V ≥ 0`: multiply the crossover estimate by the
-lower bound. -/
-private theorem rpow_inv_le_mul_of_mul_le_of_inv_le {Ap An K' D V t p : ℝ} (hp : 0 < p)
-    (hD : 0 ≤ D) (hV : 0 ≤ V) (hAp : 0 ≤ Ap) (hAn : 0 ≤ An) (hcross : Ap * An ≤ K')
-    (hx : t⁻¹ ≤ D * V ^ p⁻¹ * An ^ p⁻¹) (ht : 0 < t) :
-    Ap ^ p⁻¹ ≤ K' ^ p⁻¹ * D * V ^ p⁻¹ * t := by
-  have hone : 1 ≤ D * V ^ p⁻¹ * An ^ p⁻¹ * t := by
-    rw [← inv_mul_cancel₀ ht.ne']
-    exact mul_le_mul_of_nonneg_right hx ht.le
-  calc Ap ^ p⁻¹ ≤ Ap ^ p⁻¹ * (D * V ^ p⁻¹ * An ^ p⁻¹ * t) :=
-        le_mul_of_one_le_right (by positivity) hone
-    _ = (Ap * An) ^ p⁻¹ * (D * V ^ p⁻¹ * t) := by
-        rw [Real.mul_rpow hAp hAn]
-        ring
-    _ ≤ K' ^ p⁻¹ * (D * V ^ p⁻¹ * t) := by gcongr
-    _ = K' ^ p⁻¹ * D * V ^ p⁻¹ * t := by ring
-
-/-- For `f ≥ 0` in `L²` on a finite measure space and an exponent `p ∈ (0, 2]`, the average of
-`f ^ p` is at most that of `(f + δ) ^ p` for `δ ≥ 0`. -/
-private theorem average_rpow_le_average_add_const_rpow {α : Type*} [MeasurableSpace α]
-    {m : Measure α} [IsFiniteMeasure m] {f : α → ℝ} {p δ : ℝ} (hp : 0 < p) (hp2 : p ≤ 2)
-    (hδ : 0 ≤ δ) (hf : MemLp f 2 m) (hf0 : ∀ᵐ y ∂m, 0 ≤ f y) :
-    ⨍ y, f y ^ p ∂m ≤ ⨍ y, (f y + δ) ^ p ∂m := by
-  -- `(f + δ)^p` is integrable as `p ≤ 2`.
-  have hint' : Integrable (fun y => (f y + δ) ^ p) m := by
-    have hmem : MemLp (fun y => f y + δ) (ENNReal.ofReal p) m :=
-      (hf.add (memLp_const δ)).mono_exponent
-        ((ENNReal.ofReal_le_ofReal hp2).trans_eq (ENNReal.ofReal_ofNat 2))
-    refine (hmem.integrable_norm_rpow (ENNReal.ofReal_pos.2 hp).ne'
-      ENNReal.ofReal_ne_top).congr ?_
-    filter_upwards [hf0] with y hy
-    rw [ENNReal.toReal_ofReal hp.le, Real.norm_of_nonneg (by linarith)]
-  exact (integrable_and_average_rpow_le hp hδ hf.aestronglyMeasurable hf0 hint').2
-
-/-- If `A ≤ C (t + 1/(k + 1))` for every natural `k`, with `C > 0`, then `A ≤ C t`. -/
-private theorem le_mul_of_forall_nat_le_mul_add_one_div {A C t : ℝ} (hC : 0 < C)
-    (h : ∀ k : ℕ, A ≤ C * (t + 1 / ((k : ℝ) + 1))) : A ≤ C * t := by
-  refine le_of_forall_pos_lt_add fun ε hε => ?_
-  obtain ⟨k, hk⟩ := exists_nat_one_div_lt (div_pos hε hC)
-  calc A ≤ C * (t + 1 / ((k : ℝ) + 1)) := h k
-    _ < C * t + ε := by
-        rw [mul_add]
-        have := mul_lt_mul_of_pos_left hk hC
-        rw [mul_div_cancel₀ ε hC.ne'] at this
-        linarith
-
 /-- The weak Harnack inequality at a small exponent for supersolutions bounded below by a positive
 constant `ε`, with constants independent of `ε`. -/
 private theorem exists_pos_ae_setAverage_rpow_rpow_inv_le_mul_value_of_pos [Nonempty ι] :
@@ -201,7 +156,7 @@ private theorem exists_pos_ae_setAverage_rpow_rpow_inv_le_mul_value_of_pos [None
     field_simp
   rw [e] at hx
   -- Multiply the crossover estimate by the lower bound.
-  exact rpow_inv_le_mul_of_mul_le_of_inv_le hp₀ hD.le hV.le hAp hAn hcross' hx hux
+  exact Real.rpow_inv_le_mul_of_mul_le_of_inv_le hp₀ hD.le hV.le hAp hAn hcross' hx hux
 
 /-- **Moser's weak Harnack inequality at a small exponent.** Let `n ≥ 1` be the dimension. There
 are an exponent `p₀ ∈ (0, 2]` and a constant `C > 0`, depending only on `λ`, `Λ`, the dimension
@@ -269,14 +224,17 @@ theorem exists_pos_ae_setAverage_rpow_rpow_inv_le_mul_value [Nonempty ι] :
       average_congr (hwv2.mono fun y hy => congrArg (· ^ p₀) hy)
     rw [e] at hH
     -- The average of `u^{p₀}` is at most that of `(u + δ)^{p₀}`.
-    have hmono := average_rpow_le_average_add_const_rpow hp₀ hp₀2 hδ0.le hmem2 hu02
+    have hmono := average_rpow_le_average_add_const_rpow hp₀ hδ0.le
+      (hmem2.mono_exponent ((ENNReal.ofReal_le_ofReal hp₀2).trans_eq (ENNReal.ofReal_ofNat 2)))
+      hu02
     filter_upwards [hH, ae_restrict_of_ae_restrict_of_subset hrU hwv] with x hx hwx
     rw [hwx] at hx
     exact (Real.rpow_le_rpow (average_nonneg_of_ae (hu02.mono fun y hy => Real.rpow_nonneg hy _))
       hmono (inv_nonneg.2 hp₀.le)).trans hx
   -- Let `δ → 0`.
   filter_upwards [ae_all_iff.2 hδ] with x hx
-  exact le_mul_of_forall_nat_le_mul_add_one_div hC hx
+  simpa using ge_of_tendsto'
+    ((tendsto_one_div_add_atTop_nhds_zero_nat.const_add _).const_mul C) hx
 
 /-- **Moser's weak Harnack inequality.** Let `n ≥ 1` be the dimension. For every exponent `s > 0`
 with `(n - 2) s < n`, that is `s < n/(n - 2)` when `n ≥ 3` and `s` arbitrary when `n ≤ 2`, there
