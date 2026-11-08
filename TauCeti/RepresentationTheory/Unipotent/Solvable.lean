@@ -52,24 +52,24 @@ section Quotient
 
 variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [Module R V]
 
-/-- A submodule fixed pointwise by every group element is invariant. -/
+/-- A submodule fixed pointwise by a group element is invariant under it. -/
 theorem _root_.Representation.le_comap_of_fixed (rho : Representation R G V)
-    (p : Submodule R V) (hfix : ∀ z : G, ∀ y ∈ p, rho z y = y) (z : G) :
-    p ≤ p.comap (rho z) :=
-  fun y hy ↦ by rw [Submodule.mem_comap, hfix z y hy]; exact hy
+    (p : Submodule R V) (g : G) (hfix : ∀ y ∈ p, rho g y = y) :
+    p ≤ p.comap (rho g) :=
+  fun y hy ↦ by rw [Submodule.mem_comap, hfix y hy]; exact hy
 
-/-- An invariant submodule is also invariant under `rho g - 1`. -/
+/-- A submodule invariant under `rho g` is also invariant under `rho g - 1`. -/
 theorem _root_.Representation.le_comap_sub_one (rho : Representation R G V)
-    (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) (g : G) : p ≤ p.comap (rho g - 1) :=
+    (p : Submodule R V) (g : G) (hp : p ≤ p.comap (rho g)) : p ≤ p.comap (rho g - 1) :=
   fun x hx ↦ by
     rw [Submodule.mem_comap, LinearMap.sub_apply, one_apply_eq_self]
-    exact p.sub_mem (Submodule.mem_comap.mp (hp g hx)) hx
+    exact p.sub_mem (Submodule.mem_comap.mp (hp hx)) hx
 
 /-- On the quotient by an invariant submodule `p`, the operator `q g - 1` is induced by
 `rho g - 1`. -/
 theorem _root_.Representation.quotient_sub_one_eq_mapQ (rho : Representation R G V)
     (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) (g : G) :
-    rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) (rho.le_comap_sub_one p hp g) := by
+    rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) (rho.le_comap_sub_one p g (hp g)) := by
   ext x
   simp [Representation.quotient_apply, Submodule.mapQ_apply]
 
@@ -95,7 +95,7 @@ theorem _root_.Representation.isNilpotent_sub_one_of_quotient
   have hymem : ((rho g - 1) ^ n) y ∈ p := by
     apply (Submodule.Quotient.mk_eq_zero p).mp
     have hz := LinearMap.congr_fun hn (p.mkQ y)
-    rw [← p.mapQ_pow (rho.le_comap_sub_one p hp g) n] at hz
+    rw [← p.mapQ_pow (rho.le_comap_sub_one p g (hp g)) n] at hz
     simpa only [Submodule.mkQ_apply, Submodule.mapQ_apply, LinearMap.zero_apply] using hz
   rw [LinearMap.sub_apply, one_apply_eq_self, hfix _ hymem, sub_self, LinearMap.zero_apply]
 
