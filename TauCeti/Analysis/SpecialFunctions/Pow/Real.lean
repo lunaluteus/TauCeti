@@ -94,8 +94,6 @@ with the corresponding integral of `q`-th powers.
   real power at both ends of the real line.
 * `Real.rpow_le_exp_neg_mul`: `A ^ c ≤ e^{-c t}` when `0 ≤ A ≤ e^{-t}` and `0 ≤ c`.
 * `Real.mul_rpow_of_pos_left`: `(a t) ^ z = a ^ z t ^ z` for `0 < a` and every real `t`.
-* `Real.rpow_inv_le_mul_of_mul_le_of_inv_le`: from `Ap * An ≤ K'` and `t⁻¹ ≤ D V^{1/p} An^{1/p}`,
-  deduce `Ap^{1/p} ≤ K'^{1/p} D V^{1/p} t`.
 * `Real.le_mul_rpow_one_div_iff`: `a ≤ C * I ^ (1 / q) ↔ a ^ q ≤ C ^ q * I` for nonnegative
   `a`, `C`, `I` and `0 < q`.
 * `Function.HasFiniteSupport.hasFiniteMulSupport_fun_rpow`: real powers with finitely supported
@@ -267,24 +265,6 @@ theorem tendsto_pow_div_mul_sub_pow_atTop {n : ℕ} {ω : ℝ} (hn0 : n ≠ 0) (
     exact (sub_pos.2 this).ne'
   rw [div_pow, one_sub_div (pow_pos hD0 n).ne', inv_div]
   field_simp
-
-/-- If `Ap * An ≤ K'` and `t⁻¹ ≤ D V^{1/p} An^{1/p}` with `t > 0`, then
-`Ap^{1/p} ≤ K'^{1/p} D V^{1/p} t` for `D, V ≥ 0`: multiply the crossover estimate by the
-lower bound. -/
-theorem rpow_inv_le_mul_of_mul_le_of_inv_le {Ap An K' D V t p : ℝ} (hp : 0 < p)
-    (hD : 0 ≤ D) (hV : 0 ≤ V) (hAp : 0 ≤ Ap) (hAn : 0 ≤ An) (hcross : Ap * An ≤ K')
-    (hx : t⁻¹ ≤ D * V ^ p⁻¹ * An ^ p⁻¹) (ht : 0 < t) :
-    Ap ^ p⁻¹ ≤ K' ^ p⁻¹ * D * V ^ p⁻¹ * t := by
-  have hone : 1 ≤ D * V ^ p⁻¹ * An ^ p⁻¹ * t := by
-    rw [← inv_mul_cancel₀ ht.ne']
-    exact mul_le_mul_of_nonneg_right hx ht.le
-  calc Ap ^ p⁻¹ ≤ Ap ^ p⁻¹ * (D * V ^ p⁻¹ * An ^ p⁻¹ * t) :=
-        le_mul_of_one_le_right (by positivity) hone
-    _ = (Ap * An) ^ p⁻¹ * (D * V ^ p⁻¹ * t) := by
-        rw [Real.mul_rpow hAp hAn]
-        ring
-    _ ≤ K' ^ p⁻¹ * (D * V ^ p⁻¹ * t) := by gcongr
-    _ = K' ^ p⁻¹ * D * V ^ p⁻¹ * t := by ring
 
 end Real
 

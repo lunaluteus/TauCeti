@@ -128,6 +128,8 @@ exponent restrictions `1 ≤ p < ∞` or `1 ≤ q`.
   has vanishing average over a set of finite positive measure vanishes almost everywhere there.
 * `TauCeti.average_rpow_le_average_add_const_rpow`: for `f ≥ 0` in `Lᵖ` on a finite measure
   space, the average of `f ^ p` is at most that of `(f + δ) ^ p`.
+* `TauCeti.integrable_add_const_rpow`: `(f + c) ^ p` is integrable for `f ≥ 0` in `Lᵖ` on a finite
+  measure space and `c ≥ 0`.
 * `TauCeti.tendsto_average_add_rpow`: dominated convergence for the averages of
   `(f + δ k) ^ p` for `f` in `Lᵖ` on a finite measure space and `δ k ≥ 0` tending to `0`.
 -/
@@ -837,6 +839,18 @@ theorem integrable_and_average_rpow_le {α : Type*} [MeasurableSpace α]
   rw [average_eq, average_eq]
   exact smul_le_smul_of_nonneg_left (integral_mono_ae hint hint' hle) (by positivity)
 
+/-- For `f ≥ 0` in `Lᵖ` and `p > 0`, the function `(f + c) ^ p` is integrable on a finite measure
+space for every constant `c ≥ 0`. -/
+theorem integrable_add_const_rpow {α : Type*} [MeasurableSpace α]
+    {μ : Measure α} [IsFiniteMeasure μ] {f : α → ℝ} {p c : ℝ} (hp : 0 < p) (hc : 0 ≤ c)
+    (hf : MemLp f (ENNReal.ofReal p) μ) (hf0 : ∀ᵐ y ∂μ, 0 ≤ f y) :
+    Integrable (fun y => (f y + c) ^ p) μ := by
+  have hmem : MemLp (fun y => f y + c) (ENNReal.ofReal p) μ := hf.add (memLp_const c)
+  refine (hmem.integrable_norm_rpow (ENNReal.ofReal_pos.2 hp).ne'
+    ENNReal.ofReal_ne_top).congr ?_
+  filter_upwards [hf0] with y hy
+  rw [ENNReal.toReal_ofReal hp.le, Real.norm_of_nonneg (by linarith)]
+
 /-- Dominated convergence for the averages of `(f + δ k)^p`, for `f ≥ 0` in `Lᵖ` on a finite
 measure space, `0 < p` and `δ k ≥ 0` tending to `0`: `⨍ (f + δ k)^p → ⨍ f^p`. -/
 theorem tendsto_average_add_rpow {α : Type*} [MeasurableSpace α]
@@ -846,12 +860,8 @@ theorem tendsto_average_add_rpow {α : Type*} [MeasurableSpace α]
     Filter.Tendsto (fun k : ℕ => ⨍ y, (f y + δ k) ^ p ∂μ)
       Filter.atTop (nhds (⨍ y, f y ^ p ∂μ)) := by
   -- Eventually `0 ≤ δ ≤ 1`, so `(f + δ)^p ≤ (f + 1)^p`, which is integrable since `f ∈ Lᵖ`.
-  have hbound : Integrable (fun y => (f y + 1) ^ p) μ := by
-    have hmem : MemLp (fun y => f y + 1) (ENNReal.ofReal p) μ := hf.add (memLp_const 1)
-    refine (hmem.integrable_norm_rpow (ENNReal.ofReal_pos.2 hp).ne'
-      ENNReal.ofReal_ne_top).congr ?_
-    filter_upwards [hf0] with y hy
-    rw [ENNReal.toReal_ofReal hp.le, Real.norm_of_nonneg (by linarith)]
+  have hbound : Integrable (fun y => (f y + 1) ^ p) μ :=
+    integrable_add_const_rpow hp zero_le_one hf hf0
   have hlim : Filter.Tendsto (fun k : ℕ => ∫ y, (f y + δ k) ^ p ∂μ)
       Filter.atTop (nhds (∫ y, f y ^ p ∂μ)) := by
     refine tendsto_integral_filter_of_dominated_convergence _
@@ -895,15 +905,8 @@ theorem average_rpow_le_average_add_const_rpow {α : Type*} [MeasurableSpace α]
     {m : Measure α} [IsFiniteMeasure m] {f : α → ℝ} {p δ : ℝ} (hp : 0 < p)
     (hδ : 0 ≤ δ) (hf : MemLp f (ENNReal.ofReal p) m) (hf0 : ∀ᵐ y ∂m, 0 ≤ f y) :
     ⨍ y, f y ^ p ∂m ≤ ⨍ y, (f y + δ) ^ p ∂m := by
-  -- `(f + δ)^p` is integrable as `f ∈ Lᵖ`.
-  have hint' : Integrable (fun y => (f y + δ) ^ p) m := by
-    have hmem : MemLp (fun y => f y + δ) (ENNReal.ofReal p) m :=
-      hf.add (memLp_const δ)
-    refine (hmem.integrable_norm_rpow (ENNReal.ofReal_pos.2 hp).ne'
-      ENNReal.ofReal_ne_top).congr ?_
-    filter_upwards [hf0] with y hy
-    rw [ENNReal.toReal_ofReal hp.le, Real.norm_of_nonneg (by linarith)]
-  exact (integrable_and_average_rpow_le hp hδ hf.aestronglyMeasurable hf0 hint').2
+  exact (integrable_and_average_rpow_le hp hδ hf.aestronglyMeasurable hf0
+    (integrable_add_const_rpow hp hδ hf hf0)).2
 
 end Rpow
 
