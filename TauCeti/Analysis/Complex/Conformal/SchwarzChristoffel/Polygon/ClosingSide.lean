@@ -311,4 +311,77 @@ theorem im_schwarzChristoffelBoundary_first_lt (a e : Fin (n + 1) → ℝ)
       rw [← heq] at hlt
       exact hle.not_gt hlt
 
+/-- Under the classical hypotheses, the unbounded piece of the boundary leaving the last bounded
+vertex points along the positive real axis. -/
+lemma vertexAtInfinity_sub_last_eq_norm
+    (a e : Fin (n + 1) → ℝ) (z₀ : UpperHalfPlane) (ha : StrictMono a)
+    (he : ∀ k, e k ∈ Ioo (-1 : ℝ) 0) (hsum : ∑ k, e k = -2) :
+    schwarzChristoffelVertexAtInfinity a e z₀ - schwarzChristoffelVertex a e z₀ (Fin.last n) =
+      (‖schwarzChristoffelVertexAtInfinity a e z₀ -
+        schwarzChristoffelVertex a e z₀ (Fin.last n)‖ : ℂ) := by
+  have hfinite := neg_one_lt_sum_filter_apply_eq_apply a e ha.injective fun k ↦ (he k).1
+  have hsumlt : ∑ k, e k < -1 := by rw [hsum]; norm_num
+  have h := schwarzChristoffelVertexAtInfinity_sub_boundary_eq_norm_mul
+    a e z₀ (hfinite (Fin.last n)) (fun k _ ↦ ha.monotone k.le_last) hsumlt
+  rw [schwarzChristoffelBoundary_apply_prevertex a e z₀ (Fin.last n)
+    (hfinite (Fin.last n))] at h
+  have hzero := schwarzChristoffelEdgeAngle_eq_zero_of_last_le
+    a e ha.monotone (c := a (Fin.last n)) le_rfl
+  rw [hzero, Complex.ofReal_zero, zero_mul, Complex.exp_zero, mul_one] at h
+  exact h
+
+/-- Under the classical hypotheses, the unbounded piece of the boundary arriving at the first
+bounded vertex points along the positive real axis. -/
+lemma vertex_zero_sub_vertexAtInfinity_eq_norm
+    (a e : Fin (n + 1) → ℝ) (z₀ : UpperHalfPlane) (ha : StrictMono a)
+    (he : ∀ k, e k ∈ Ioo (-1 : ℝ) 0) (hsum : ∑ k, e k = -2) :
+    schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertexAtInfinity a e z₀ =
+      (‖schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertexAtInfinity a e z₀‖ : ℂ) := by
+  have hfinite := neg_one_lt_sum_filter_apply_eq_apply a e ha.injective fun k ↦ (he k).1
+  have hsumlt : ∑ k, e k < -1 := by rw [hsum]; norm_num
+  have h := schwarzChristoffelBoundary_sub_vertexAtInfinity_eq_norm_mul
+    a e z₀ (hfinite 0) (fun k _ ↦ ha.monotone k.zero_le) hsumlt
+  rw [schwarzChristoffelBoundary_apply_prevertex a e z₀ 0 (hfinite 0)] at h
+  have hexp : Complex.exp (((Real.pi * (-2 : ℝ) : ℝ) : ℂ) * Complex.I) = 1 := by
+    convert Complex.exp_int_mul_two_pi_mul_I (-1) using 1
+    push_cast
+    ring_nf
+  have harg : (Real.pi : ℂ) * ((-2 : ℝ) : ℂ) * Complex.I =
+      (((Real.pi * (-2 : ℝ) : ℝ) : ℂ) * Complex.I) := by
+    push_cast
+    ring
+  rw [hsum, harg, hexp, mul_one] at h
+  exact h
+
+/-- Both pieces incident to infinity point along the positive real axis when the total exponent
+is `-2`, so their sum, rotated by `-θ` with `θ ∈ (-π, 0)`, has strictly positive height. -/
+lemma im_exp_neg_mul_closing_pos
+    (a e : Fin (n + 1) → ℝ) (z₀ : UpperHalfPlane) (ha : StrictMono a)
+    (he : ∀ k, e k ∈ Ioo (-1 : ℝ) 0) (hsum : ∑ k, e k = -2) (θ : ℝ)
+    (hθ₀ : θ < 0) (hθπ : -Real.pi < θ) :
+    0 < (Complex.exp (-θ * Complex.I) *
+      ((schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertexAtInfinity a e z₀) +
+        (schwarzChristoffelVertexAtInfinity a e z₀ -
+          schwarzChristoffelVertex a e z₀ (Fin.last n)))).im := by
+  have hfinite := neg_one_lt_sum_filter_apply_eq_apply a e ha.injective fun k ↦ (he k).1
+  have hsumlt : ∑ k, e k < -1 := by rw [hsum]; norm_num
+  rw [vertex_zero_sub_vertexAtInfinity_eq_norm a e z₀ ha he hsum,
+    vertexAtInfinity_sub_last_eq_norm a e z₀ ha he hsum, mul_add, Complex.add_im,
+    ← Complex.ofReal_neg θ]
+  simp only [Complex.mul_im, Complex.exp_ofReal_mul_I_im, Complex.exp_ofReal_mul_I_re,
+    Complex.ofReal_re, Complex.ofReal_im, mul_zero, zero_add]
+  rw [← mul_add, mul_comm]
+  apply mul_pos
+  · have hfirstNe := schwarzChristoffelBoundary_ne_vertexAtInfinity_of_forall_ge
+      a e z₀ (hfinite 0) (fun k _ ↦ ha.monotone k.zero_le) hsumlt
+    rw [schwarzChristoffelBoundary_apply_prevertex a e z₀ 0 (hfinite 0)] at hfirstNe
+    have hlastNe := schwarzChristoffelBoundary_ne_vertexAtInfinity_of_forall_le
+      a e z₀ (hfinite (Fin.last n)) (fun k _ ↦ ha.monotone k.le_last) hsumlt
+    rw [schwarzChristoffelBoundary_apply_prevertex a e z₀ (Fin.last n)
+      (hfinite (Fin.last n))] at hlastNe
+    exact add_pos
+      (norm_pos_iff.mpr (sub_ne_zero.mpr hfirstNe))
+      (norm_pos_iff.mpr (sub_ne_zero.mpr hlastNe.symm))
+  · exact Real.sin_pos_of_pos_of_lt_pi (neg_pos.mpr hθ₀) (by linarith)
+
 end TauCeti
