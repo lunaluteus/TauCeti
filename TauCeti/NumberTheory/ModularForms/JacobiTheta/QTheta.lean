@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.SpecialFunctions.QPochhammer
 import Mathlib.Analysis.Complex.Liouville
-import Mathlib.Analysis.Complex.RemovableSingularity
 import TauCeti.Analysis.Complex.UpperHalfPlane.PeriodPair
 import TauCeti.Analysis.SpecialFunctions.Elliptic.PeriodPair
 import TauCeti.NumberTheory.ModularForms.DedekindEta
