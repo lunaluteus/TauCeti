@@ -52,8 +52,8 @@ lifting to characteristic zero.
   `k[G]`-module when `V` is finite projective and `W` is finite over `k`.
 * `Representation.natCard_linearMap_eq_natCard_invariants_linHom`: the `k[G]`-linear maps `M → S`
   are counted by the invariants of the conjugation representation on `Hom_k(M, S)`.
-* `Representation.nonempty_equiv_linHom_comp_of_equivariant`: an equivariant isomorphism
-  `ρ ≅ ρ'` along a group homomorphism `f : H →* G` induces an isomorphism of the restricted
+* `Representation.Equiv.linHomComp`: an isomorphism `ρ.comp f ≅ ρ'.comp f` of representations
+  restricted along a group homomorphism `f : H →* G` induces an isomorphism of the restricted
   conjugation representations `Hom_k(ρ, σ) ≅ Hom_k(ρ', σ)`.
 
 ## References
@@ -203,21 +203,29 @@ theorem natCard_linearMap_eq_natCard_invariants_linHom {k : Type*} [CommRing k] 
       ((TauCeti.Representation.ofModule'AsModuleEquiv (k := k) (G := G) M).arrowCongrAddEquiv
         (TauCeti.Representation.ofModule'AsModuleEquiv (k := k) (G := G) S))).toEquiv).symm
 
-/-- An equivariant isomorphism `ρ ≅ ρ'` along `f : H →* G` induces an isomorphism of the
-conjugation representations `Hom_k(ρ, σ) ≅ Hom_k(ρ', σ)` restricted along `f`. -/
-theorem nonempty_equiv_linHom_comp_of_equivariant {k : Type*} [CommRing k] {G H : Type*}
-    [Group G] [Group H] {V V' W : Type*} [AddCommGroup V] [Module k V] [AddCommGroup V']
-    [Module k V'] [AddCommGroup W] [Module k W] (ρ : Representation k G V)
-    (ρ' : Representation k G V') (σ : Representation k G W) (f : H →* G) (e : V ≃ₗ[k] V')
-    (he : ∀ (h : H) (x : V), e (ρ (f h) x) = ρ' (f h) (e x)) :
-    Nonempty (Representation.Equiv ((Representation.linHom ρ σ).comp f)
-      ((Representation.linHom ρ' σ).comp f)) := by
-  refine ⟨.mk (LinearEquiv.congrLeft W k e) fun h ↦ ?_⟩
-  ext φ x
-  simp only [MonoidHom.coe_comp, Function.comp_apply, Representation.linHom_apply,
-    LinearMap.comp_apply]
-  refine congrArg (σ (f h)) (congrArg φ (e.injective ?_))
-  simpa [map_inv] using he h⁻¹ (e.symm x)
+/-- **Functoriality of the conjugation representation in an equivariant isomorphism.** An
+isomorphism `e : ρ.comp f ≅ ρ'.comp f` of representations restricted along `f : H →* G` induces
+the isomorphism `φ ↦ φ ∘ e.symm` between the conjugation representations `Hom_k(ρ, σ)` and
+`Hom_k(ρ', σ)` restricted along `f`. -/
+def Equiv.linHomComp {k : Type*} [CommRing k] {G H : Type*} [Group G] [Group H]
+    {V V' W : Type*} [AddCommGroup V] [Module k V] [AddCommGroup V'] [Module k V']
+    [AddCommGroup W] [Module k W] {ρ : Representation k G V} {ρ' : Representation k G V'}
+    {f : H →* G} (e : Representation.Equiv (ρ.comp f) (ρ'.comp f)) (σ : Representation k G W) :
+    Representation.Equiv ((linHom ρ σ).comp f) ((linHom ρ' σ).comp f) :=
+  .mk (LinearEquiv.congrLeft W k e.toLinearEquiv) fun h ↦ by
+    ext φ x
+    change σ (f h) (φ (ρ (f h)⁻¹ (e.symm x))) = σ (f h) (φ (e.symm (ρ' (f h)⁻¹ x)))
+    rw [← map_inv]
+    exact congrArg (σ (f h)) (congrArg φ (e.symm.isIntertwining _ _ h⁻¹ x).symm)
+
+@[simp]
+theorem Equiv.linHomComp_apply {k : Type*} [CommRing k] {G H : Type*} [Group G] [Group H]
+    {V V' W : Type*} [AddCommGroup V] [Module k V] [AddCommGroup V'] [Module k V']
+    [AddCommGroup W] [Module k W] {ρ : Representation k G V} {ρ' : Representation k G V'}
+    {f : H →* G} (e : Representation.Equiv (ρ.comp f) (ρ'.comp f)) (σ : Representation k G W)
+    (φ : V →ₗ[k] W) (x : V') :
+    e.linHomComp σ φ x = φ (e.symm x) :=
+  (rfl)
 
 end Invariants
 

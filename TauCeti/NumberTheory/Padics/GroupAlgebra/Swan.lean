@@ -57,31 +57,6 @@ attribute [local instance] padicReductionModule
 
 section Helpers
 
-/-- The image of a monomial of the group algebra of a subgroup `C` in the group algebra of `G`. -/
-private theorem mapDomainAlgHom_single_subtype (R : Type*) [CommSemiring R] {G : Type*} [Group G]
-    (C : Subgroup G) (c : C) :
-    MonoidAlgebra.mapDomainAlgHom R R C.subtype (MonoidAlgebra.single c 1) =
-      MonoidAlgebra.single (c : G) 1 := by
-  rw [MonoidAlgebra.mapDomainAlgHom_apply, MonoidAlgebra.mapDomain_single]
-  rfl
-
-/-- A linear isomorphism over the group algebra of a subgroup `C` commutes with the action of every
-element of `C`, when `R[C]` acts on both modules through `mapDomainRingHom R C.subtype`. -/
-private theorem map_ofModule'_of_subgroup {R : Type*} [CommRing R] {G : Type*} [Group G]
-    (C : Subgroup G) {X Y : Type*} [AddCommGroup X] [Module R X] [Module R[G] X]
-    [IsScalarTower R R[G] X] [Module R[C] X] [AddCommGroup Y] [Module R Y] [Module R[G] Y]
-    [IsScalarTower R R[G] Y] [Module R[C] Y]
-    (hX : ∀ (r : R[C]) (x : X), r • x = MonoidAlgebra.mapDomainRingHom R C.subtype r • x)
-    (hY : ∀ (r : R[C]) (y : Y), r • y = MonoidAlgebra.mapDomainRingHom R C.subtype r • y)
-    (e : X ≃ₗ[R[C]] Y) (c : C) (x : X) :
-    e (Representation.ofModule' (k := R) (G := G) X c x) =
-      Representation.ofModule' (k := R) (G := G) Y c (e x) := by
-  have hφ := mapDomainAlgHom_single_subtype R C c
-  rw [TauCeti.Representation.ofModule'_apply, TauCeti.Representation.ofModule'_apply, ← hφ]
-  have h := e.map_smul (MonoidAlgebra.single c 1) x
-  rw [hX, hY] at h
-  exact h
-
 /-- Projective `𝔽_p[G]`-representations that are the reductions of `ℤ_p[G]`-lattices with the same
 characters have equally many invariants: both counts are `p` to the rank of the invariants of the
 lattice, which is the average of the character. -/
@@ -191,7 +166,8 @@ private theorem exists_linearEquiv_commute_reduction_of_not_dvd (p : ℕ) [Fact 
       ((padicReductionCongr p C eMN).trans
         (padicReductionRestrictLinearEquiv p C C.subtype N (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)))
   exact ⟨e.restrictScalars (ZMod p), fun c hc x ↦
-    map_ofModule'_of_subgroup C (fun _ _ ↦ rfl) (fun _ _ ↦ rfl) e ⟨c, hc⟩ x⟩
+    Representation.map_ofModule'_comp C.subtype (fun _ _ ↦ rfl) (fun _ _ ↦ rfl) e.toLinearMap
+      ⟨c, hc⟩ x⟩
 
 section Lift
 
@@ -255,8 +231,8 @@ private theorem trace_ofModule'_eq_of_equiv_comp (C : Subgroup G) {g : G} (hg : 
   have hconj : (eX.restrictScalars ℤ_[p]).conj (Representation.ofModule' X₁ g) =
       Representation.ofModule' X₂ g := LinearMap.ext fun x ↦ by
     rw [LinearEquiv.conj_apply_apply]
-    simpa using map_ofModule'_of_subgroup C (fun _ _ ↦ rfl) (fun _ _ ↦ rfl) eX ⟨g, hg⟩
-      (eX.symm x)
+    simpa using Representation.map_ofModule'_comp C.subtype (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)
+      eX.toLinearMap ⟨g, hg⟩ (eX.symm x)
   rw [← hconj, LinearMap.trace_conj']
 
 /-- **Equal characters from isomorphic restrictions to cyclic subgroups.** Let `X₁` and `X₂` be
@@ -272,10 +248,9 @@ private theorem trace_ofModule'_eq_of_forall_equiv_comp_zpowers
     LinearMap.trace ℤ_[p] X₁ (Representation.ofModule' (k := ℤ_[p]) (G := G) X₁ g) =
       LinearMap.trace ℤ_[p] X₂ (Representation.ofModule' (k := ℤ_[p]) (G := G) X₂ g) := by
   by_cases hg : p ∣ orderOf g
-  · rw [trace_ofModule'_eq_zero_of_dvd_orderOf X₁ (p := p)
-        (show ¬IsUnit (p : ℤ_[p]) from PadicInt.p_nonunit) hg,
-      trace_ofModule'_eq_zero_of_dvd_orderOf X₂ (p := p)
-        (show ¬IsUnit (p : ℤ_[p]) from PadicInt.p_nonunit) hg]
+  · have hp : ¬IsUnit (p : ℤ_[p]) := PadicInt.p_nonunit
+    rw [trace_ofModule'_eq_zero_of_dvd_orderOf X₁ hp hg,
+      trace_ofModule'_eq_zero_of_dvd_orderOf X₂ hp hg]
   · obtain ⟨e⟩ := hη g hg
     exact trace_ofModule'_eq_of_equiv_comp p η₁ η₂ X₁ X₂ f₁ hf₁ f₂ hf₂
       (Subgroup.zpowers g) (Subgroup.mem_zpowers g) e
@@ -346,7 +321,8 @@ private theorem natCard_linearMap_reduction_eq_of_tensorRat (p : ℕ) [Fact p.Pr
     (trace_ofModule'_eq_of_forall_equiv_comp_zpowers p _ _ XM XN fM hfM fN hfN fun g hg ↦ ?_)
   obtain ⟨e, he⟩ := exists_linearEquiv_commute_reduction_of_not_dvd p (Subgroup.zpowers g)
     (by simpa only [Nat.card_zpowers] using hg) M N h
-  exact Representation.nonempty_equiv_linHom_comp_of_equivariant ρM ρN σ _ e fun c x ↦ he c c.2 x
+  exact ⟨Representation.Equiv.linHomComp (ρ := ρM) (ρ' := ρN) (f := (Subgroup.zpowers g).subtype)
+    (.mk e fun c ↦ LinearMap.ext fun x ↦ he c c.2 x) σ⟩
 
 end Helpers
 
