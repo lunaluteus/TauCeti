@@ -122,6 +122,9 @@ exponent restrictions `1 ≤ p < ∞` or `1 ≤ q`.
   of `s` converge to those over `s`.
 * `TauCeti.exists_lt_of_measure_lt_of_le_setIntegral`: a set of measure below `δ / c` with
   integral at least `δ` contains a point where the function exceeds `c`.
+* `TauCeti.setLIntegral_enorm_sub_setAverage_le_add_of_continuous`: the deviation of `u` from its
+  mean over `T` on `A ⊆ U` is at most that of a continuous approximation `v`, plus
+  `(1 + μ(U) / μ(T))` times the `L¹(closure U)` distance from `v` to `u`.
 * `TauCeti.integrable_and_average_rpow_le`: if `(f + δ) ^ s` is integrable then so is `f ^ s`, with
   a smaller average.
 * `TauCeti.ae_eq_zero_of_setAverage_rpow_eq_zero`: a nonnegative `Lᵠ` function whose `p`-th power
@@ -902,5 +905,55 @@ theorem _root_.ContinuousLinearMap.average_apply {H : X → E →L[𝕜] F} (hH 
   rw [average_eq, average_eq, smul_apply, ContinuousLinearMap.integral_apply hH]
 
 end ContinuousLinearMap
+
+section ContinuousApproximation
+
+variable {X : Type*} [MeasurableSpace X] [TopologicalSpace X] [OpensMeasurableSpace X]
+  {μ : Measure X} [IsLocallyFiniteMeasure μ] {u : X → ℝ}
+
+/-- The deviation of `u` from its mean over `T` on `A ⊆ U` is at most that of a continuous
+approximation `v`, plus `(1 + μ(U) / μ(T))` times the `L¹(closure U)` distance from `v` to `u`. -/
+theorem setLIntegral_enorm_sub_setAverage_le_add_of_continuous {U T A : Set X}
+    (hUK : IsCompact (closure U)) (huK : IntegrableOn u (closure U) μ) {v : X → ℝ}
+    (hv : Continuous v) (hT : T ⊆ U) (hA : A ⊆ U) :
+    ∫⁻ x in A, ‖u x - ⨍ y in T, u y ∂μ‖ₑ ∂μ ≤
+      (∫⁻ x in closure U, ‖v x - u x‖ₑ ∂μ) +
+        μ U / μ T * ∫⁻ x in closure U, ‖v x - u x‖ₑ ∂μ +
+        ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ := by
+  set e := ∫⁻ x in closure U, ‖v x - u x‖ₑ ∂μ
+  -- The means over `T` differ by at most `e / μ(T)`.
+  have hab : ‖(⨍ y in T, v y ∂μ) - ⨍ y in T, u y ∂μ‖ₑ ≤ e / μ T := by
+    have hTK : T ⊆ closure U := hT.trans subset_closure
+    rw [← setAverage_fun_sub
+      ((hv.locallyIntegrable.integrableOn_isCompact hUK).mono_set hTK) (huK.mono_set hTK)]
+    refine (enorm_setAverage_le_setLAverage μ _ T).trans ?_
+    rw [setLAverage_eq]
+    gcongr
+    exact lintegral_mono_set hTK
+  -- The triangle inequality through `v` and its mean.
+  have hdist : AEMeasurable (fun x => ‖v x - u x‖ₑ) (μ.restrict A) :=
+    ((hv.aestronglyMeasurable.restrict.sub huK.aestronglyMeasurable).enorm).mono_measure
+      (Measure.restrict_mono (hA.trans subset_closure) le_rfl)
+  calc ∫⁻ x in A, ‖u x - ⨍ y in T, u y ∂μ‖ₑ ∂μ
+      ≤ ∫⁻ x in A, (‖v x - u x‖ₑ + ‖v x - ⨍ y in T, v y ∂μ‖ₑ +
+          ‖(⨍ y in T, v y ∂μ) - ⨍ y in T, u y ∂μ‖ₑ) ∂μ := by
+        refine lintegral_mono fun x => ?_
+        rw [← enorm_neg (v x - u x)]
+        refine le_of_eq_of_le ?_
+          ((enorm_add_le _ _).trans (add_le_add_left (enorm_add_le _ _) _))
+        congr 1
+        ring
+    _ = ∫⁻ x in A, ‖v x - u x‖ₑ ∂μ + ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ +
+          ‖(⨍ y in T, v y ∂μ) - ⨍ y in T, u y ∂μ‖ₑ * μ A := by
+        rw [lintegral_add_right _ measurable_const, lintegral_add_left' hdist,
+          setLIntegral_const]
+    _ ≤ e + ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ + e / μ T * μ U := by
+        gcongr
+        exact lintegral_mono_set (hA.trans subset_closure)
+    _ = e + μ U / μ T * e + ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ := by
+        simp only [div_eq_mul_inv]
+        ring
+
+end ContinuousApproximation
 
 end TauCeti
