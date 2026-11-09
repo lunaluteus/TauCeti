@@ -214,8 +214,8 @@ def Equiv.linHomComp {k : Type*} [CommRing k] {G H : Type*} [Group G] [Group H]
     Representation.Equiv ((linHom ρ σ).comp f) ((linHom ρ' σ).comp f) :=
   .mk (LinearEquiv.congrLeft W k e.toLinearEquiv) fun h ↦ by
     ext φ x
-    change σ (f h) (φ (ρ (f h)⁻¹ (e.symm x))) = σ (f h) (φ (e.symm (ρ' (f h)⁻¹ x)))
-    rw [← map_inv]
+    simp only [LinearMap.comp_apply, MonoidHom.comp_apply, linHom_apply,
+      LinearEquiv.congrLeft_apply, Equiv.toFun_as_coe, LinearEquiv.coe_coe, ← map_inv]
     exact congrArg (σ (f h)) (congrArg φ (e.symm.isIntertwining _ _ h⁻¹ x).symm)
 
 @[simp]
