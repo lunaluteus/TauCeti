@@ -36,8 +36,9 @@ group and every quotient `L^∨ ⧸ (L^∨ ∩ a L^∨ ∩ L)` are infinite
 `cL = (c : ℝ) • L` is finite with `cⁿ |L^∨ / L|` elements.
 
 For an integral lattice, unimodularity `L = L^∨` is equivalent to each of `covolume L = 1`,
-`det L = 1` and the triviality of the discriminant group. Unimodular lattices have covolume one
-whether or not they are assumed integral (`ZLattice.IsUnimodular.covolume_eq_one`).
+`det L = 1` and the triviality of the discriminant group. A unimodular lattice is automatically
+discrete and full, and has covolume one with no further assumption
+(`ZLattice.IsUnimodular.covolume_eq_one`).
 
 For an even lattice of even rank `2k`, the signed determinant `(-1)^k det L` is congruent to `0`
 or `1` modulo `4`, because the Gram matrix of a `ℤ`-basis is a symmetric integer matrix with even
@@ -299,11 +300,11 @@ theorem IsIntegral.det_toMatrix_integralForm (h : IsIntegral L) {ι : Type*} [Fi
   -- A full lattice with a finite `ℤ`-basis spans `E` over `ℝ` by finitely many vectors.
   have : FiniteDimensional ℝ E := by
     refine ⟨⟨(Set.finite_range fun i ↦ (b i : E)).toFinset, ?_⟩⟩
-    rw [Set.Finite.coe_toFinset, ← Submodule.span_span_of_tower ℤ ℝ,
-      ← IsZLattice.span_top (K := ℝ) (L := L)]
-    congr 2
-    have := congrArg (Submodule.map L.subtype) b.span_eq
-    rwa [Submodule.map_span, ← Set.range_comp, Submodule.map_top, Submodule.range_subtype] at this
+    have hz : span ℤ (Set.range fun i ↦ (b i : E)) = L := by
+      rw [show (Set.range fun i ↦ (b i : E)) = L.subtype '' Set.range b from Set.range_comp _ _,
+        Submodule.span_image, b.span_eq, Submodule.map_top, Submodule.range_subtype]
+    rw [Set.Finite.coe_toFinset, ← Submodule.span_span_of_tower ℤ ℝ, hz]
+    exact IsZLattice.span_top
   refine Int.cast_injective (α := ℝ) ?_
   rw [Int.cast_natCast, ← h.det_eq_card_discriminantGroup, det_eq_det_gram L b, Int.cast_det]
   congr 1
@@ -337,49 +338,6 @@ theorem IsEven.neg_one_pow_mul_card_discriminantGroup_modEq_zero_or_one (h : IsE
     h.isIntegral.isSymm_integralForm).neg_one_pow_mul_det_modEq_zero_or_one hGeven hcard
 
 /-! ### Unimodular lattices -/
-
-omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] [DiscreteTopology L]
-  [IsZLattice ℝ L] in
-/-- An integral lattice is discrete: its nonzero vectors have integer squared norm, hence norm at
-least one. -/
-theorem IsIntegral.discreteTopology (h : IsIntegral L) : DiscreteTopology L := by
-  refine discreteTopology_of_isOpen_singleton_zero ?_
-  rw [Metric.isOpen_singleton_iff]
-  refine ⟨1, one_pos, fun x hx ↦ ?_⟩
-  have hx1 : ‖(x : E)‖ < 1 := by simpa using hx
-  by_contra hx0
-  obtain ⟨m, hm⟩ := isIntegral_iff.1 h x.1 x.2 x.1 x.2
-  rw [real_inner_self_eq_norm_sq] at hm
-  have hpos : (0 : ℝ) < ‖(x : E)‖ := norm_pos_iff.2 fun h0 ↦ hx0 (Subtype.ext h0)
-  have hm0 : (0 : ℤ) < m := by exact_mod_cast hm ▸ pow_pos hpos 2
-  have hm1 : (1 : ℝ) ≤ m := by exact_mod_cast hm0
-  nlinarith
-
-omit [MeasurableSpace E] [BorelSpace E] [DiscreteTopology L] [IsZLattice ℝ L] in
-/-- A unimodular lattice in a finite-dimensional real inner product space spans the space: a
-nonzero vector `v` orthogonal to `L` would lie in `L = L^∨`, and so would all its real multiples,
-including one of squared norm `1 / 2`, which is not an integer. -/
-theorem IsUnimodular.span_eq_top (h : IsUnimodular L) : span ℝ (L : Set E) = ⊤ := by
-  by_contra hne
-  obtain ⟨v, hv, hv0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot
-    (mt Submodule.orthogonal_eq_bot_iff.1 hne)
-  have hmem (t : ℝ) : t • v ∈ L := by
-    rw [← h.dual_eq, mem_dual]
-    refine fun y hy ↦ ⟨0, ?_⟩
-    rw [real_inner_smul_left, real_inner_comm,
-      Submodule.inner_right_of_mem_orthogonal (subset_span hy) hv]
-    simp
-  have hnorm : (0 : ℝ) < ‖v‖ := norm_pos_iff.2 hv0
-  obtain ⟨m, hm⟩ := isIntegral_iff.1 h.isIntegral _ (hmem (1 / (√2 * ‖v‖))) _
-    (hmem (1 / (√2 * ‖v‖)))
-  rw [real_inner_smul_left, real_inner_smul_right, real_inner_self_eq_norm_sq] at hm
-  have h2 : (1 / (√2 * ‖v‖)) * ((1 / (√2 * ‖v‖)) * ‖v‖ ^ 2) = 1 / 2 := by
-    field_simp
-    rw [Real.sq_sqrt (by norm_num)]
-  rw [h2] at hm
-  have h3 : (2 : ℝ) * m = 1 := by linarith
-  have h4 : (2 : ℤ) * m = 1 := by exact_mod_cast h3
-  omega
 
 omit [DiscreteTopology L] [IsZLattice ℝ L] in
 /-- A unimodular lattice has covolume one. -/
