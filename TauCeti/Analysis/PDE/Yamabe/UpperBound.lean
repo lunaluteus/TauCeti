@@ -429,6 +429,26 @@ private lemma rpow_two_div_criticalExponent_le {n : ℕ} (hn : 2 < n) {η t D J 
         rw [Real.mul_rpow (by positivity) hD.le, Real.mul_rpow hη1'.le (by positivity), htP]
     _ ≤ _ := Real.rpow_le_rpow (by positivity) hIP (by positivity)
 
+/-- A quotient estimate with distortion `η`: if `N ≤ t ^ m ((1 + η) ³ A + S (1 + η) t² B)` and
+`(1 - η) ^ q t ^ m D ^ q ≤ J ^ q`, then, using `t ≤ η`,
+`N / J ^ q ≤ ((1 + η) ³ A + S (1 + η) η² B) / ((1 - η) ^ q D ^ q)`. -/
+private theorem div_rpow_le_distortion_bound {m : ℕ} {q η t S A B D N J : ℝ} (hη1 : η < 1)
+    (ht0 : 0 < t) (htη : t ≤ η) (hS : 0 ≤ S) (hA : 0 ≤ A) (hB : 0 ≤ B) (hD : 0 < D)
+    (hnum : N ≤ t ^ m * ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B))
+    (hden : (1 - η) ^ q * t ^ m * D ^ q ≤ J ^ q) :
+    N / J ^ q ≤
+      ((1 + η) ^ 3 * A + S * (1 + η) * η ^ 2 * B) / ((1 - η) ^ q * D ^ q) := by
+  have hη1' := sub_pos.2 hη1
+  have hη0 : 0 < η := ht0.trans_le htη
+  calc N / J ^ q
+      ≤ t ^ m * ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B) /
+        ((1 - η) ^ q * t ^ m * D ^ q) :=
+        div_le_div₀ (by positivity) hnum (by positivity) hden
+    _ = ((1 + η) ^ 3 * A + S * (1 + η) * t ^ 2 * B) / ((1 - η) ^ q * D ^ q) := by
+        have : t ^ m ≠ 0 := pow_ne_zero _ ht0.ne'
+        field_simp
+    _ ≤ _ := by gcongr
+
 omit [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)] in
 /-- **The transplanted test function.** Given orthonormal coordinates `L` at `p` (see
 `TauCeti.exists_equiv_map_addHaar_eq_smul_volume`), a Euclidean test function `v` supported in the
@@ -539,7 +559,7 @@ theorem exists_contMDiff_hasCompactSupport_yamabeQuotient_lt [I.Boundaryless]
   refine ⟨u, hu, huc, huU, hu0, (by positivity : 0 < (1 - η) * t ^ finrank ℝ E *
     ∫ z, |v z| ^ criticalExponent (finrank ℝ E)).trans_le hIP, ?_⟩
   rw [yamabeQuotient_def]
-  exact (Real.div_rpow_le_distortion_bound hη1 ht0 htη (by positivity)
+  exact (div_rpow_le_distortion_bound hη1 ht0 htη (by positivity)
     (mul_nonneg (conformalCoefficient_pos hn).le (integral_nonneg fun _ ↦ sq_nonneg _))
     (integral_nonneg fun _ ↦ sq_nonneg _) hD hnum hden).trans_lt hGη
 
