@@ -106,10 +106,18 @@ theorem comap_C_map_C_sup_span_C_mul_X_sub_one (I : Ideal R) (r : R) (S : Type*)
   rw [mem_comap_C_map_C_sup_span_C_mul_X_sub_one_iff, mem_comap,
     IsLocalization.Away.algebraMap_mem_map_algebraMap_iff r]
 
+/-- A polynomial over `R ⧸ (ϖ)` with a coefficient the residue of an element not divisible by `ϖ`
+is nonzero. -/
+private theorem ne_zero_of_coeff_mk_of_not_dvd {ϖ u : R} (hu : ¬ ϖ ∣ u)
+    (p : (R ⧸ Ideal.span {ϖ})[X]) (n : ℕ) (h : p.coeff n = Ideal.Quotient.mk _ u) : p ≠ 0 :=
+  fun h0 ↦ hu ((Ideal.Quotient.eq_zero_iff_dvd _ _).1 (by rw [← h, h0, coeff_zero]))
+
 /-- For a prime element `ϖ`, the residues `t` modulo `ϖ` for which
 `ϖ ^ 4` divides `(ϖ t)³ + a₂ (ϖ t)² + a₄ (ϖ t) + a₆` are among the roots of a nonzero polynomial of
 degree at most `3` over `R ⧸ (ϖ)`: the first nonzero coefficient of `a₆, a₄ ϖ, a₂ ϖ², ϖ³`
-modulo `ϖ⁴` gives the polynomial, which is monic when `ϖ` divides `a₂`, `a₄` and `a₆`. -/
+modulo `ϖ⁴` gives the polynomial. The theorem only asserts that the polynomial is nonzero of
+degree at most `3`; the construction below yields a monic cubic when `ϖ ∣ a₂`, `ϖ² ∣ a₄` and
+`ϖ³ ∣ a₆`. -/
 theorem exists_poly_isRoot_mk_of_pow_four_dvd_cubic [IsDomain R] {ϖ : R} (hϖ : _root_.Prime ϖ)
     (a₂ a₄ a₆ : R) :
     ∃ p : (R ⧸ Ideal.span {ϖ})[X], p ≠ 0 ∧ p.natDegree ≤ 3 ∧ ∀ t : R,
@@ -117,14 +125,13 @@ theorem exists_poly_isRoot_mk_of_pow_four_dvd_cubic [IsDomain R] {ϖ : R} (hϖ :
         p.IsRoot (Ideal.Quotient.mk _ t) := by
   have : (Ideal.span {ϖ}).IsPrime := (Ideal.span_singleton_prime hϖ.ne_zero).2 hϖ
   have hm (x : R) (hx : ϖ ∣ x) : Ideal.Quotient.mk (Ideal.span {ϖ}) x = 0 :=
-    Ideal.Quotient.eq_zero_iff_mem.2 (Ideal.mem_span_singleton.2 hx)
-  have hm' (x : R) (hx : Ideal.Quotient.mk (Ideal.span {ϖ}) x = 0) : ϖ ∣ x :=
-    Ideal.mem_span_singleton.1 (Ideal.Quotient.eq_zero_iff_mem.1 hx)
+    (Ideal.Quotient.eq_zero_iff_dvd _ _).2 hx
   have cancel (k n : ℕ) (x z : R) (h : ϖ ^ (k + n) ∣ z) (e : z = ϖ ^ k * x) : ϖ ^ n ∣ x := by
     rw [e, pow_add] at h
     exact (mul_dvd_mul_iff_left (pow_ne_zero _ hϖ.ne_zero)).1 h
   have step (x y z : R) (h : ϖ ∣ z) (e : z = ϖ * x + y) : ϖ ∣ y :=
     (dvd_add_right (dvd_mul_right ϖ x)).1 (e ▸ h)
+  -- Stage 1: `a₆` is the constant term modulo `ϖ`, so either `ϖ ∤ a₆` or we cancel one `ϖ`.
   by_cases h6 : ϖ ∣ a₆
   swap
   · refine ⟨1, one_ne_zero, by simp, fun t h ↦ (h6 ?_).elim⟩
@@ -134,17 +141,16 @@ theorem exists_poly_isRoot_mk_of_pow_four_dvd_cubic [IsDomain R] {ϖ : R} (hϖ :
   have hG (t : R) (h : ϖ ^ 4 ∣ (ϖ * t) ^ 3 + a₂ * (ϖ * t) ^ 2 + a₄ * (ϖ * t) + ϖ * b) :
       ϖ ∣ ϖ ^ 2 * t ^ 3 + a₂ * ϖ * t ^ 2 + a₄ * t + b :=
     (dvd_pow_self ϖ (by norm_num : 3 ≠ 0)).trans (cancel 1 3 _ _ h (by ring))
+  -- Stage 2: the coefficient `a₄` of the linear term modulo `ϖ`.
   by_cases h4 : ϖ ∣ a₄
   swap
   · refine ⟨C (Ideal.Quotient.mk _ a₄) * X + C (Ideal.Quotient.mk _ b), ?_, by compute_degree!,
       fun t h ↦ ?_⟩
-    · intro h0
-      have := congrArg (fun q ↦ q.coeff 1) h0
-      simp only [coeff_add, coeff_C_mul, coeff_X_one, coeff_C, coeff_zero] at this
-      exact h4 (hm' _ (by simpa using this))
+    · exact ne_zero_of_coeff_mk_of_not_dvd h4 _ 1 (by simp)
     · simpa [IsRoot.def, map_add, map_mul, map_pow] using
         hm _ (step (ϖ * t ^ 3 + a₂ * t ^ 2) (a₄ * t + b) _ (hG t h) (by ring))
   obtain ⟨c, rfl⟩ := h4
+  -- Stage 3: with `a₄ = ϖ c`, the constant term `b` must be divisible by `ϖ` (else no root).
   by_cases hb : ϖ ∣ b
   swap
   · refine ⟨1, one_ne_zero, by simp, fun t h ↦ (hb ?_).elim⟩
@@ -155,29 +161,26 @@ theorem exists_poly_isRoot_mk_of_pow_four_dvd_cubic [IsDomain R] {ϖ : R} (hϖ :
   have hH1 (t : R) (h : ϖ ^ 4 ∣ (ϖ * t) ^ 3 + a₂ * (ϖ * t) ^ 2 + ϖ * c * (ϖ * t) +
       ϖ * (ϖ * d)) : ϖ ∣ ϖ * t ^ 3 + a₂ * t ^ 2 + c * t + d :=
     (dvd_pow_self ϖ (by norm_num : 2 ≠ 0)).trans (hH t h)
+  -- Stage 4: cancel `ϖ²` and look at the coefficient `a₂` of the quadratic term.
   by_cases h2 : ϖ ∣ a₂
   swap
   · refine ⟨C (Ideal.Quotient.mk _ a₂) * X ^ 2 + C (Ideal.Quotient.mk _ c) * X +
       C (Ideal.Quotient.mk _ d), ?_, by compute_degree!, fun t h ↦ ?_⟩
-    · intro h0
-      have := congrArg (fun q ↦ q.coeff 2) h0
-      simp only [coeff_add, coeff_C_mul, coeff_X_pow, coeff_X, coeff_C, coeff_zero] at this
-      exact h2 (hm' _ (by simpa using this))
+    · exact ne_zero_of_coeff_mk_of_not_dvd h2 _ 2 (by simp)
     · have := hm _ (step (t ^ 3) (a₂ * t ^ 2 + c * t + d) _ (hH1 t h) (by ring))
       rw [map_add, map_add, map_mul, map_mul, map_pow] at this
       simpa [IsRoot.def] using this
   obtain ⟨e, rfl⟩ := h2
+  -- Stage 5: with `a₂ = ϖ e`, the linear coefficient `c` modulo `ϖ`.
   by_cases hc : ϖ ∣ c
   swap
   · refine ⟨C (Ideal.Quotient.mk _ c) * X + C (Ideal.Quotient.mk _ d), ?_, by compute_degree!,
       fun t h ↦ ?_⟩
-    · intro h0
-      have := congrArg (fun q ↦ q.coeff 1) h0
-      simp only [coeff_add, coeff_C_mul, coeff_X_one, coeff_C, coeff_zero] at this
-      exact hc (hm' _ (by simpa using this))
+    · exact ne_zero_of_coeff_mk_of_not_dvd hc _ 1 (by simp)
     · simpa [IsRoot.def, map_add, map_mul, map_pow] using
         hm _ (step (t ^ 3 + e * t ^ 2) (c * t + d) _ (hH1 t h) (by ring))
   obtain ⟨f, rfl⟩ := hc
+  -- Stage 6: with `c = ϖ f`, the constant `d` is forced divisible by `ϖ`; then monic cubic.
   by_cases hd : ϖ ∣ d
   swap
   · refine ⟨1, one_ne_zero, by simp, fun t h ↦ (hd ?_).elim⟩
