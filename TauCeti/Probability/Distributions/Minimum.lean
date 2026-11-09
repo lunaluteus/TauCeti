@@ -120,7 +120,7 @@ theorem intervalIntegrable_deriv_cdf_min_div_one_sub_cdf (hindep : iIndepFun X P
   have hi : ∀ i, IntervalIntegrable
       (fun t => deriv (cdf (μ i)) t / (1 - cdf (μ i) t)) volume a b := by
     intro i
-    apply intervalIntegrable_div_one_sub_cdf (hac i) (fun t ht => hS t ht i)
+    apply intervalIntegrable_div_one_sub_cdf (fun t ht => hS t ht i)
     filter_upwards [(hac i).ae_differentiableAt] with t ht hmem
     exact (ht (uIoc_subset_uIcc hmem)).hasDerivAt
   have hsum := IntervalIntegrable.sum Finset.univ (fun i _ => hi i)
