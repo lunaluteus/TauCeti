@@ -122,9 +122,9 @@ exponent restrictions `1 ≤ p < ∞` or `1 ≤ q`.
   of `s` converge to those over `s`.
 * `TauCeti.exists_lt_of_measure_lt_of_le_setIntegral`: a set of measure below `δ / c` with
   integral at least `δ` contains a point where the function exceeds `c`.
-* `TauCeti.setLIntegral_enorm_sub_setAverage_le_add_of_continuous`: the deviation of `u` from its
-  mean over `T` on `A ⊆ U` is at most that of a continuous approximation `v`, plus
-  `(1 + μ(U) / μ(T))` times the `L¹(closure U)` distance from `v` to `u`.
+* `TauCeti.setLIntegral_enorm_sub_setAverage_le_add_of_integrableOn`: the deviation of `u` from its
+  mean over `T` on `A ⊆ U` is at most that of an approximation `v`, plus `(1 + μ(U) / μ(T))` times
+  the `L¹(U)` distance from `v` to `u`.
 * `TauCeti.integrable_and_average_rpow_le`: if `(f + δ) ^ s` is integrable then so is `f ^ s`, with
   a smaller average.
 * `TauCeti.ae_eq_zero_of_setAverage_rpow_eq_zero`: a nonnegative `Lᵠ` function whose `p`-th power
@@ -906,34 +906,31 @@ theorem _root_.ContinuousLinearMap.average_apply {H : X → E →L[𝕜] F} (hH 
 
 end ContinuousLinearMap
 
-section ContinuousApproximation
+section Approximation
 
-variable {X : Type*} [MeasurableSpace X] [TopologicalSpace X] [OpensMeasurableSpace X]
-  {μ : Measure X} [IsLocallyFiniteMeasure μ] {u : X → ℝ}
+variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {u : X → ℝ}
 
-/-- The deviation of `u` from its mean over `T` on `A ⊆ U` is at most that of a continuous
-approximation `v`, plus `(1 + μ(U) / μ(T))` times the `L¹(closure U)` distance from `v` to `u`. -/
-theorem setLIntegral_enorm_sub_setAverage_le_add_of_continuous {U T A : Set X}
-    (hUK : IsCompact (closure U)) (huK : IntegrableOn u (closure U) μ) {v : X → ℝ}
-    (hv : Continuous v) (hT : T ⊆ U) (hA : A ⊆ U) :
+/-- The deviation of `u` from its mean over `T` on `A ⊆ U` is at most that of an approximation
+`v`, plus `(1 + μ(U) / μ(T))` times the `L¹(U)` distance from `v` to `u`, for `u` and `v`
+integrable on `U`. -/
+theorem setLIntegral_enorm_sub_setAverage_le_add_of_integrableOn {U T A : Set X}
+    (huU : IntegrableOn u U μ) {v : X → ℝ} (hvU : IntegrableOn v U μ) (hT : T ⊆ U) (hA : A ⊆ U) :
     ∫⁻ x in A, ‖u x - ⨍ y in T, u y ∂μ‖ₑ ∂μ ≤
-      (∫⁻ x in closure U, ‖v x - u x‖ₑ ∂μ) +
-        μ U / μ T * ∫⁻ x in closure U, ‖v x - u x‖ₑ ∂μ +
+      (∫⁻ x in U, ‖v x - u x‖ₑ ∂μ) +
+        μ U / μ T * ∫⁻ x in U, ‖v x - u x‖ₑ ∂μ +
         ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ := by
-  set e := ∫⁻ x in closure U, ‖v x - u x‖ₑ ∂μ
+  set e := ∫⁻ x in U, ‖v x - u x‖ₑ ∂μ
   -- The means over `T` differ by at most `e / μ(T)`.
   have hab : ‖(⨍ y in T, v y ∂μ) - ⨍ y in T, u y ∂μ‖ₑ ≤ e / μ T := by
-    have hTK : T ⊆ closure U := hT.trans subset_closure
-    rw [← setAverage_fun_sub
-      ((hv.locallyIntegrable.integrableOn_isCompact hUK).mono_set hTK) (huK.mono_set hTK)]
+    rw [← setAverage_fun_sub (hvU.mono_set hT) (huU.mono_set hT)]
     refine (enorm_setAverage_le_setLAverage μ _ T).trans ?_
     rw [setLAverage_eq]
     gcongr
-    exact lintegral_mono_set hTK
+    exact lintegral_mono_set hT
   -- The triangle inequality through `v` and its mean.
   have hdist : AEMeasurable (fun x => ‖v x - u x‖ₑ) (μ.restrict A) :=
-    ((hv.aestronglyMeasurable.restrict.sub huK.aestronglyMeasurable).enorm).mono_measure
-      (Measure.restrict_mono (hA.trans subset_closure) le_rfl)
+    ((hvU.aestronglyMeasurable.sub huU.aestronglyMeasurable).enorm.mono_measure
+      (Measure.restrict_mono hA le_rfl))
   calc ∫⁻ x in A, ‖u x - ⨍ y in T, u y ∂μ‖ₑ ∂μ
       ≤ ∫⁻ x in A, (‖v x - u x‖ₑ + ‖v x - ⨍ y in T, v y ∂μ‖ₑ +
           ‖(⨍ y in T, v y ∂μ) - ⨍ y in T, u y ∂μ‖ₑ) ∂μ := by
@@ -949,11 +946,11 @@ theorem setLIntegral_enorm_sub_setAverage_le_add_of_continuous {U T A : Set X}
           setLIntegral_const]
     _ ≤ e + ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ + e / μ T * μ U := by
         gcongr
-        exact lintegral_mono_set (hA.trans subset_closure)
+        exact lintegral_mono_set hA
     _ = e + μ U / μ T * e + ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ := by
         simp only [div_eq_mul_inv]
         ring
 
-end ContinuousApproximation
+end Approximation
 
 end TauCeti

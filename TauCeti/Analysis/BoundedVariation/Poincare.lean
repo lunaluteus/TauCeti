@@ -281,7 +281,6 @@ private theorem setLIntegral_enorm_sub_setAverage_le_of_closure_subset {U T : Se
   set C := ENNReal.ofReal (μ.real (ball 0 1) ^ (1 - (finrank ℝ E : ℝ)⁻¹) *
     diam U ^ finrank ℝ E / μ.real T) * μ A ^ (finrank ℝ E : ℝ)⁻¹
   have hUb : Bornology.IsBounded U := hUK.isBounded.subset subset_closure
-  have hUfin : μ U ≠ ∞ := hUb.measure_lt_top.ne
   have huK : IntegrableOn u (closure U) μ := hu.integrableOn_compact_subset hUΩ hUK
   -- `C¹` functions `v n` converging to `u` in `L¹(closure U)`, with variation on `U` eventually at
   -- most `|Du|(Ω)`. The `L¹(closure U)` distance from `v n` to `u` is `e n`.
@@ -289,8 +288,8 @@ private theorem setLIntegral_enorm_sub_setAverage_le_of_closure_subset {U T : Se
     exists_mollifier_seq_of_isCompact_closure (Ω' := ⟨U, hU⟩) hu hUK hUΩ
   have he := hconv (closure U) hUK Subset.rfl
   set e : ℕ → ℝ≥0∞ := fun n => ∫⁻ x in closure U, ‖v n x - u x‖ₑ ∂μ
-  set M : ℝ≥0∞ := μ U / μ T
-  have hM : M ≠ ∞ := ENNReal.div_ne_top hUfin hT₀
+  set M : ℝ≥0∞ := μ (closure U) / μ T
+  have hM : M ≠ ∞ := ENNReal.div_ne_top hUK.measure_lt_top.ne hT₀
   -- Once the variation bound holds, the inequality holds for `u` up to an error `(1 + M) e n`.
   have hbound (n : ℕ) (hvn : totalVariationOn μ ⟨U, hU⟩ (v n) ≤ totalVariationOn μ Ω u) :
       ∫⁻ x in A, ‖u x - ⨍ y in T, u y ∂μ‖ₑ ∂μ ≤ e n + M * e n + C * totalVariationOn μ Ω u := by
@@ -302,8 +301,9 @@ private theorem setLIntegral_enorm_sub_setAverage_le_of_closure_subset {U T : Se
         ).totalVariationOn_eq_setLIntegral_enorm_fderiv (μ := μ) (Ω := ⟨U, hU⟩)
       rw [Opens.coe_mk] at hL
       exact hL ▸ hvn
-    refine (setLIntegral_enorm_sub_setAverage_le_add_of_continuous hUK huK (hv n).continuous hT
-      hA).trans ?_
+    refine (setLIntegral_enorm_sub_setAverage_le_add_of_integrableOn huK
+      ((hv n).continuous.locallyIntegrable.integrableOn_isCompact hUK)
+      (hT.trans subset_closure) (hA.trans subset_closure)).trans ?_
     gcongr
   have hlim : Tendsto (fun n => e n + M * e n + C * totalVariationOn μ Ω u) atTop
       (𝓝 (0 + M * 0 + C * totalVariationOn μ Ω u)) :=

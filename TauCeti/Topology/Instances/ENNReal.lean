@@ -22,8 +22,8 @@ subtraction-based estimates are unavailable, and the superadditivity of the lowe
   constant vanishes as `h → 0`.
 * `TauCeti.tendsto_of_le_add_of_le_add`: a family within `wᵢ` of `b` from both sides converges
   to `b` when `wᵢ → 0`.
-* `TauCeti.tendsto_ofReal_div_mul_add_mul_enorm_sub`: the bounds `K / m n * T + M * ‖s n - a‖`
-  converge to `K / m₀ * T` when `m n → m₀ > 0` and `s n → a`, for finite `M`.
+* `TauCeti.tendsto_ofReal_div_mul_add_mul_enorm_sub`: the bounds `K / m i * T + M * ‖s i - a‖`
+  converge to `K / m₀ * T` along a filter on which `m i → m₀ > 0` and `s i → a`, for finite `M`.
 * `ENNReal.le_liminf_add` and `ENNReal.sum_liminf_le_liminf_sum`: the sum of the lower limits of
   finitely many `ℝ≥0∞`-valued families is at most the lower limit of their sum.
 * `ENNReal.le_add_of_forall_one_lt_le_add_mul`: if `a ≤ b + t c` for every `t > 1`, then
@@ -136,20 +136,20 @@ theorem truncated_cost_le_add_of_label_eq {X Y ι κ : Type*} [PseudoMetricSpace
     rw [hc', hc', ite_eq_right (by simpa using hxy), ite_eq_right (by simpa using hxy')]
     exact le_self_add
 
-/-- The bounds `K / m n * T + M * ‖s n - a‖` converge to `K / m₀ * T` when `m n → m₀ > 0` and
-`s n → a`, for finite `M`. -/
-theorem tendsto_ofReal_div_mul_add_mul_enorm_sub {K a m₀ : ℝ} {m s : ℕ → ℝ}
-    {T M : ℝ≥0∞} (hK : 0 ≤ K) (hm₀ : 0 < m₀) (hm : Filter.Tendsto m Filter.atTop (nhds m₀))
-    (hs : Filter.Tendsto s Filter.atTop (nhds a)) (hM : M ≠ ∞) :
-    Filter.Tendsto (fun n => ENNReal.ofReal (K / m n) * T + M * ‖s n - a‖ₑ) Filter.atTop
+/-- The bounds `K / m i * T + M * ‖s i - a‖` converge to `K / m₀ * T` along any filter on which
+`m i → m₀ > 0` and `s i → a`, for finite `M`. -/
+theorem tendsto_ofReal_div_mul_add_mul_enorm_sub {ι : Type*} {l : Filter ι} {K a m₀ : ℝ}
+    {m s : ι → ℝ} {T M : ℝ≥0∞} (hK : 0 ≤ K) (hm₀ : 0 < m₀) (hm : Filter.Tendsto m l (nhds m₀))
+    (hs : Filter.Tendsto s l (nhds a)) (hM : M ≠ ∞) :
+    Filter.Tendsto (fun n => ENNReal.ofReal (K / m n) * T + M * ‖s n - a‖ₑ) l
       (nhds (ENNReal.ofReal (K / m₀) * T + M * 0)) := by
   refine Filter.Tendsto.add ?_ (ENNReal.Tendsto.const_mul ?_ (Or.inr hM))
   · rcases eq_or_ne K 0 with hK₀ | hK₀
-    · simp [hK₀]
+    · simpa [hK₀] using tendsto_const_nhds
     refine ENNReal.Tendsto.mul_const
       (ENNReal.tendsto_ofReal (tendsto_const_nhds.div hm hm₀.ne')) (Or.inl ?_)
     exact (ENNReal.ofReal_pos.2 (div_pos (lt_of_le_of_ne hK hK₀.symm) hm₀)).ne'
-  · have h0 : Filter.Tendsto (fun n ↦ s n - a) Filter.atTop (nhds 0) := by
+  · have h0 : Filter.Tendsto (fun n ↦ s n - a) l (nhds 0) := by
       simpa using hs.sub_const a
     simpa [Function.comp_def] using (continuous_enorm.tendsto (0 : ℝ)).comp h0
 
