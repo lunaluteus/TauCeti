@@ -112,12 +112,9 @@ private theorem ne_zero_of_coeff_mk_of_not_dvd {ϖ u : R} (hu : ¬ ϖ ∣ u)
     (p : (R ⧸ Ideal.span {ϖ})[X]) (n : ℕ) (h : p.coeff n = Ideal.Quotient.mk _ u) : p ≠ 0 :=
   fun h0 ↦ hu ((Ideal.Quotient.eq_zero_iff_dvd _ _).1 (by rw [← h, h0, coeff_zero]))
 
-/-- For a prime element `ϖ`, the residues `t` modulo `ϖ` for which
+/-- Over an integral domain `R` with a prime element `ϖ`, the residues `t` modulo `ϖ` for which
 `ϖ ^ 4` divides `(ϖ t)³ + a₂ (ϖ t)² + a₄ (ϖ t) + a₆` are among the roots of a nonzero polynomial of
-degree at most `3` over `R ⧸ (ϖ)`: the first nonzero coefficient of `a₆, a₄ ϖ, a₂ ϖ², ϖ³`
-modulo `ϖ⁴` gives the polynomial. The theorem only asserts that the polynomial is nonzero of
-degree at most `3`; the construction below yields a monic cubic when `ϖ ∣ a₂`, `ϖ² ∣ a₄` and
-`ϖ³ ∣ a₆`. -/
+degree at most `3` over `R ⧸ (ϖ)`. -/
 theorem exists_poly_isRoot_mk_of_pow_four_dvd_cubic [IsDomain R] {ϖ : R} (hϖ : _root_.Prime ϖ)
     (a₂ a₄ a₆ : R) :
     ∃ p : (R ⧸ Ideal.span {ϖ})[X], p ≠ 0 ∧ p.natDegree ≤ 3 ∧ ∀ t : R,
