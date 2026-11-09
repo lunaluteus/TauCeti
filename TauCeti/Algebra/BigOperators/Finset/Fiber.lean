@@ -35,6 +35,8 @@ for the fibre sums over the range holds for the fibre sum over every value of th
   regroups, coordinate by coordinate, into `∑ i, ∑ a, φ i a * ∑ z with z i = a, f z`.
 * `TauCeti.prod_filter_eq_apply_of_injective`, `TauCeti.sum_filter_eq_apply_of_injective`: along
   an injective map the fibre product (sum) at the value of `j` is just `F j`.
+* `TauCeti.lt_sum_filter_eq_apply_of_injective`: a strict lower bound for `F` bounds every fibre
+  sum of an injective map.
 * `TauCeti.forall_prod_filter_eq_of_forall_apply`,
   `TauCeti.forall_sum_filter_eq_of_forall_apply`: a property holding at the unit and at fibre
   products over the range holds at every fibre product; for instance a lower bound `c ≤ 0` on
@@ -91,6 +93,14 @@ theorem prod_filter_eq_apply_of_injective {ι κ M : Type*} [Fintype ι] [Decida
     simp only [mem_filter, mem_univ, true_and, mem_singleton]
     exact hg.eq_iff
   rw [hfilter, prod_singleton]
+
+/-- Along an injective map every fibre sum at a value of `g` is a value of `F`, so a strict lower
+bound for `F` is a strict lower bound for all those fibre sums. -/
+theorem lt_sum_filter_eq_apply_of_injective {ι κ M : Type*} [Fintype ι] [DecidableEq κ]
+    [AddCommMonoid M] [Preorder M] {g : ι → κ} (hg : Function.Injective g) {F : ι → M} {c : M}
+    (h : ∀ j, c < F j) (j : ι) : c < ∑ i with g i = g j, F i := by
+  rw [sum_filter_eq_apply_of_injective hg F j]
+  exact h j
 
 /-- A property holding at one and at every fibre product over the range holds at every fibre
 product, since fibres outside the range are empty. -/

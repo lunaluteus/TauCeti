@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Polygon.EdgeIntersection.Criterion
 import TauCeti.Analysis.Complex.PlaneSeparation.Segment
-import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.ExponentSum
+import TauCeti.Algebra.BigOperators.Finset.Fiber
 
 /-!
 # Closing-side separation from vertex heights
@@ -142,7 +142,7 @@ theorem schwarzChristoffelCompactifiedBoundary_injective_of_bounded_intersection
         z ∈ (schwarzChristoffelPolygon a e z₀).edgeSet ℝ j.castSucc.castSucc →
           j.val = i.val + 1 ∧ z = schwarzChristoffelVertex a e z₀ i.succ) :
     Function.Injective (schwarzChristoffelCompactifiedBoundary a e z₀) := by
-  have hfinite := neg_one_lt_sum_filter_apply_eq_apply a e ha.injective he
+  have hfinite := lt_sum_filter_eq_apply_of_injective ha.injective he
   obtain ⟨hleft, hright⟩ :=
     schwarzChristoffelPolygon_closing_intersections_of_vertex_heights
       a e z₀ ha he hsum hheight

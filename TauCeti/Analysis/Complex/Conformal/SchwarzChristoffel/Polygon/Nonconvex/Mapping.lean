@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Polygon.Vert
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Polygon.ClosingHeight
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.FilledInterior
 import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Polygon.EdgeIntersection.Converse
-import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.ExponentSum
+import TauCeti.Algebra.BigOperators.Finset.Fiber
 
 /-!
 # A Schwarz--Christoffel map onto a nonconvex polygon
@@ -54,7 +54,7 @@ theorem schwarzChristoffelCompactifiedBoundary_injective_of_vertex_separation_of
     (hheight : ∀ k : Fin (n + 3), k ≠ 0 → k ≠ Fin.last (n + 2) →
       (schwarzChristoffelVertex a e z₀ 0).im < (schwarzChristoffelVertex a e z₀ k).im) :
     Function.Injective (schwarzChristoffelCompactifiedBoundary a e z₀) := by
-  have hfinite := neg_one_lt_sum_filter_apply_eq_apply a e ha.injective he
+  have hfinite := lt_sum_filter_eq_apply_of_injective ha.injective he
   have harc := schwarzChristoffelBoundary_injOn_prevertex_interval_of_vertex_separation
     a e z₀ ha he hcorner hne hsep
   have hbounded : ∀ (i j : Fin (n + 2)), i < j →
@@ -87,7 +87,7 @@ theorem bijOn_schwarzChristoffelPrimitive_filledHull_sdiff_of_vertex_separation_
     BijOn (schwarzChristoffelPrimitive a e z₀) upperHalfPlaneSet
       (filledHull ((schwarzChristoffelPolygon a e z₀).boundary ℝ) \
         (schwarzChristoffelPolygon a e z₀).boundary ℝ) := by
-  have hfinite := neg_one_lt_sum_filter_apply_eq_apply a e ha.injective he
+  have hfinite := lt_sum_filter_eq_apply_of_injective ha.injective he
   have hinfty : ∑ k, e k < -1 := by rw [hsum]; norm_num
   have hinj :=
     schwarzChristoffelCompactifiedBoundary_injective_of_vertex_separation_of_vertex_heights

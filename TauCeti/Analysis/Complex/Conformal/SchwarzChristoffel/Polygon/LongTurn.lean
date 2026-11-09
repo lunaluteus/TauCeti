@@ -8,7 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.GlobalTurning
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Polygon.ShortTurn
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.UnboundedEdge
-import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.ExponentSum
+import TauCeti.Algebra.BigOperators.Finset.Fiber
 import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Polygon.ClosingSide
 
 /-!
@@ -116,8 +116,8 @@ private lemma im_exp_neg_mul_vertex_sub_nonneg
       schwarzChristoffelVertex a e z₀ k'.succ - schwarzChristoffelVertex a e z₀ k'.castSucc :=
     congrArg₂ (· - ·) (hVeval k'.succ) (hVeval k'.castSucc)
   have him := im_exp_neg_mul_schwarzChristoffelVertex_succ_sub_eq
-    a e z₀ ha θ k' (neg_one_lt_sum_filter_apply_eq_apply a e ha.injective he _)
-    (neg_one_lt_sum_filter_apply_eq_apply a e ha.injective he _)
+    a e z₀ ha θ k' (lt_sum_filter_eq_apply_of_injective ha.injective he _)
+    (lt_sum_filter_eq_apply_of_injective ha.injective he _)
   simp only [Complex.imCLM_apply, hV]
   rw [him]
   exact mul_nonneg (norm_nonneg _) (hsin k' (Fin.le_def.mpr hk.1) (Fin.le_def.mpr hk.2))
@@ -196,7 +196,7 @@ theorem im_exp_neg_mul_schwarzChristoffelVertex_sub_pos_of_long_turn
   have hθjlower : -Real.pi < θj := by
     dsimp only [θj]
     linarith
-  have hclose := im_exp_neg_mul_closing_pos a e z₀ ha he hsum θj hθjneg hθjlower
+  have hclose := im_exp_neg_mul_closing_pos a e z₀ ha (fun k ↦ (he k).1) hsum θj hθjneg hθjlower
   -- The early bounded edges are read one full turn later, so their adjusted angles lie in
   -- `(0, π)` relative to side `j`.
   have hleft := im_exp_neg_mul_vertex_sub_nonneg_of_long_turn a e z₀ ha he hsum i j hij hlong
@@ -238,8 +238,8 @@ private lemma im_exp_neg_mul_vertex_succ_sub_nonneg_of_long_turn
         schwarzChristoffelVertex a e z₀ i.castSucc)).im := by
   let θj := schwarzChristoffelEdgeAngle a e (a j.castSucc)
   have him := im_exp_neg_mul_schwarzChristoffelVertex_succ_sub_eq
-    a e z₀ ha θj i (neg_one_lt_sum_filter_apply_eq_apply a e ha.injective (fun k ↦ (he k).1) _)
-    (neg_one_lt_sum_filter_apply_eq_apply a e ha.injective (fun k ↦ (he k).1) _)
+    a e z₀ ha θj i (lt_sum_filter_eq_apply_of_injective ha.injective (fun k ↦ (he k).1) _)
+    (lt_sum_filter_eq_apply_of_injective ha.injective (fun k ↦ (he k).1) _)
   rw [him]
   exact mul_nonneg (norm_nonneg _)
     (sin_edgeAngle_sub_nonneg_of_long_turn a e ha he hsum i i j le_rfl hij hlong)
@@ -272,8 +272,8 @@ theorem disjoint_schwarzChristoffelPolygon_edgeSet_of_long_turn
       a e z₀ ha he hsum i j hij hlong
   have hjzero : (u * (Vj' - Vj)).im = 0 := by
     have him := im_exp_neg_mul_schwarzChristoffelVertex_succ_sub_eq
-      a e z₀ ha θj j (neg_one_lt_sum_filter_apply_eq_apply a e ha.injective (fun k ↦ (he k).1) _)
-      (neg_one_lt_sum_filter_apply_eq_apply a e ha.injective (fun k ↦ (he k).1) _)
+      a e z₀ ha θj j (lt_sum_filter_eq_apply_of_injective ha.injective (fun k ↦ (he k).1) _)
+      (lt_sum_filter_eq_apply_of_injective ha.injective (fun k ↦ (he k).1) _)
     simpa only [u, θj, sub_self, Real.sin_zero, mul_zero, Vi, Vi', Vj, Vj'] using him
   have hi_nonneg : 0 ≤ (u * (Vi' - Vi)).im :=
     im_exp_neg_mul_vertex_succ_sub_nonneg_of_long_turn a e z₀ ha he hsum i j hij hlong
@@ -319,7 +319,7 @@ theorem disjoint_schwarzChristoffelPolygon_bounded_edgeSet
       a e z₀ ha i j
     · exact fun _ _ _ _ hkl ↦
         schwarzChristoffelEdgeAngle_comp_strictMono a e ha (fun k ↦ (he k).2) hkl
-    · exact fun k _ ↦ neg_one_lt_sum_filter_apply_eq_apply a e ha.injective (fun k ↦ (he k).1) k
+    · exact fun k _ ↦ lt_sum_filter_eq_apply_of_injective ha.injective (fun k ↦ (he k).1) k
     · exact hij
     · exact hshort
   · exact disjoint_schwarzChristoffelPolygon_edgeSet_of_long_turn
