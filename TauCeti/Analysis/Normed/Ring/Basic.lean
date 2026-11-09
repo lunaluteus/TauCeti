@@ -77,6 +77,12 @@ theorem norm_mul_pow_le {R : Type*} [SeminormedRing R] (x y : R) (n : ℕ) :
   · exact (norm_mul_le _ _).trans
       (mul_le_mul_of_nonneg_left (norm_pow_le' y n.succ_pos) (norm_nonneg x))
 
+/-- A point within distance `1` of `1` is not `0`. -/
+theorem ne_zero_of_norm_sub_one_lt {R : Type*} [SeminormedRing R] [NormOneClass R] {z : R}
+    (hz : ‖z - 1‖ < 1) : z ≠ 0 := by
+  rintro rfl
+  simp at hz
+
 end TauCeti
 
 end
