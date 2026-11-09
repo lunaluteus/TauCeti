@@ -266,6 +266,21 @@ theorem tendsto_pow_div_mul_sub_pow_atTop {n : ℕ} {ω : ℝ} (hn0 : n ≠ 0) (
   rw [div_pow, one_sub_div (pow_pos hD0 n).ne', inv_div]
   field_simp
 
+/-- If `a * b ≤ K` and `t⁻¹ ≤ c * b ^ q` with `t > 0`, `c ≥ 0` and `q ≥ 0`, then
+`a ^ q ≤ K ^ q * c * t`: multiply the crossover estimate by the lower bound. -/
+theorem rpow_le_mul_of_mul_le_of_inv_le {a b K c t q : ℝ} (hq : 0 ≤ q) (hc : 0 ≤ c)
+    (ha : 0 ≤ a) (hb : 0 ≤ b) (h : a * b ≤ K) (hx : t⁻¹ ≤ c * b ^ q) (ht : 0 < t) :
+    a ^ q ≤ K ^ q * c * t := by
+  have hone : 1 ≤ c * b ^ q * t := by
+    rw [← inv_mul_cancel₀ ht.ne']
+    exact mul_le_mul_of_nonneg_right hx ht.le
+  calc a ^ q ≤ a ^ q * (c * b ^ q * t) := le_mul_of_one_le_right (by positivity) hone
+    _ = (a * b) ^ q * (c * t) := by
+        rw [Real.mul_rpow ha hb]
+        ring
+    _ ≤ K ^ q * (c * t) := by gcongr
+    _ = K ^ q * c * t := by ring
+
 end Real
 
 /-- Real powers `g i ^ f i` with finitely supported exponents `f` have finite multiplicative

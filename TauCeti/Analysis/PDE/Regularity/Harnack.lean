@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.PDE.Regularity.Crossover
 public import TauCeti.Analysis.PDE.Regularity.ReverseHolder
 public import TauCeti.Analysis.PDE.Regularity.Supersolution.Lp
+import TauCeti.Analysis.SpecialFunctions.Pow.Real
 import TauCeti.MeasureTheory.Integral.Average
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.OpenPos
@@ -88,21 +89,6 @@ namespace PDE
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {mu : Measure (EuclideanSpace ℝ ι)}
   [mu.IsAddHaarMeasure] {lam Lam : ℝ}
 
-/-- If `a * b ≤ K` and `t⁻¹ ≤ c * b ^ q` with `t > 0`, `c ≥ 0` and `q ≥ 0`, then
-`a ^ q ≤ K ^ q * c * t`: multiply the crossover estimate by the lower bound. -/
-private theorem rpow_le_mul_of_mul_le_of_inv_le {a b K c t q : ℝ} (hq : 0 ≤ q) (hc : 0 ≤ c)
-    (ha : 0 ≤ a) (hb : 0 ≤ b) (h : a * b ≤ K) (hx : t⁻¹ ≤ c * b ^ q) (ht : 0 < t) :
-    a ^ q ≤ K ^ q * c * t := by
-  have hone : 1 ≤ c * b ^ q * t := by
-    rw [← inv_mul_cancel₀ ht.ne']
-    exact mul_le_mul_of_nonneg_right hx ht.le
-  calc a ^ q ≤ a ^ q * (c * b ^ q * t) := le_mul_of_one_le_right (by positivity) hone
-    _ = (a * b) ^ q * (c * t) := by
-        rw [Real.mul_rpow ha hb]
-        ring
-    _ ≤ K ^ q * (c * t) := by gcongr
-    _ = K ^ q * c * t := by ring
-
 /-- The weak Harnack inequality at a small exponent for supersolutions bounded below by a positive
 constant `ε`, with constants independent of `ε`. -/
 private theorem exists_pos_ae_setAverage_rpow_rpow_inv_le_mul_value_of_pos [Nonempty ι] :
@@ -171,8 +157,8 @@ private theorem exists_pos_ae_setAverage_rpow_rpow_inv_le_mul_value_of_pos [None
   rw [e] at hx
   -- Multiply the crossover estimate by the lower bound.
   rw [mul_assoc (K' ^ p₀⁻¹) D]
-  exact rpow_le_mul_of_mul_le_of_inv_le (inv_nonneg.2 hp₀.le) (by positivity) hAp hAn hcross' hx
-    hux
+  exact Real.rpow_le_mul_of_mul_le_of_inv_le (inv_nonneg.2 hp₀.le) (by positivity) hAp hAn
+    hcross' hx hux
 
 /-- **Moser's weak Harnack inequality at a small exponent.** Let `n ≥ 1` be the dimension. There
 are an exponent `p₀ ∈ (0, 2]` and a constant `C > 0`, depending only on `λ`, `Λ`, the dimension
