@@ -162,9 +162,17 @@ private theorem projective_of_injective_transpose [FiniteDimensional k A] [Small
 /-- Over a finite-dimensional algebra, the linear dual of a finite-dimensional injective
 right module is a projective left module, with the action given by precomposition. -/
 theorem moduleProjective_of_dual_injective [FiniteDimensional k A] [FiniteDimensional k N]
-    [Small.{w} Aᵐᵒᵖ] [Module.Injective Aᵐᵒᵖ N] (e : Q ≃ₗ[k] Module.Dual k N)
+    [Module.Injective Aᵐᵒᵖ N] (e : Q ≃ₗ[k] Module.Dual k N)
     (he : ∀ (a : A) (q : Q) (x : N), e (a • q) x = e q (MulOpposite.op a • x)) :
     Module.Projective A Q := by
+  -- A trivial `N` has trivial dual `Q`; otherwise `k ↪ N` makes `k`, hence `A` and `Aᵐᵒᵖ`, small.
+  rcases subsingleton_or_nontrivial N with hN | hN
+  · have : Subsingleton Q := e.toEquiv.subsingleton_congr.2 inferInstance
+    exact Module.Projective.of_basis (Module.Basis.empty (ι := Empty) (R := A) Q)
+  obtain ⟨x, hx⟩ := exists_ne (0 : N)
+  have : Small.{w} k := small_of_injective (f := fun c : k ↦ c • x) (smul_left_injective k hx)
+  have : Small.{w} Aᵐᵒᵖ := small_of_injective (f := fun a : Aᵐᵒᵖ ↦ (Module.finBasis k A).equivFun
+    a.unop) ((Module.finBasis k A).equivFun.injective.comp MulOpposite.unop_injective)
   -- The dual `D(ₐA)` of the left regular module, as a right module: `(ψ · c) x = ψ (c * x)`.
   let : Module Aᵐᵒᵖ (Module.Dual k A) := Module.compHom _
     { toFun := fun c ↦ (LinearMap.mulLeft k c.unop).dualMap
