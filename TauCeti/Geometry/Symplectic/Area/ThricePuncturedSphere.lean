@@ -127,7 +127,13 @@ private theorem truncation_eq_union {R r ρ : ℝ} (hr : r = Real.exp (-(2 * π 
 `0` nor `1`. -/
 private theorem ne_zero_ne_one_of_mem_annulus {r : ℝ} (hr : 0 < r) {z : ℂ}
     (hz : z ∈ {z : ℂ | r ≤ ‖z - 1‖ ∧ ‖z - 1‖ ≤ 3 / 4}) : z ≠ 0 ∧ z ≠ 1 :=
-  ⟨ne_zero_of_norm_sub_one_lt (by linarith [hz.2]), Metric.ne_of_mem_annulus hr hz⟩
+  ⟨ne_zero_of_norm_sub_one_lt (by linarith [hz.2]), Metric.ne_of_norm_sub_pos (hr.trans_le hz.1)⟩
+
+/-- A point outside the ball of radius `3/4` about `1` is at distance at least `3/4` from `1`. -/
+private theorem le_norm_sub_one_of_mem_sdiff_ball {S : Set ℂ} {z : ℂ}
+    (hz : z ∈ S \ ball 1 (3 / 4)) : 3 / 4 ≤ ‖z - 1‖ := by
+  have := hz.2
+  rwa [mem_ball, dist_eq_norm, not_lt] at this
 
 /-- The sphere of radius `3/4` about `1` is almost nowhere. -/
 private theorem ae_notMem_sphere : ∀ᵐ z ∂(volume : Measure ℂ), z ∉ sphere (1 : ℂ) (3 / 4) :=
@@ -147,17 +153,16 @@ private theorem exists_cutoff {u : ℂ → V} (hu : ∀ w : ℂ, w ≠ 0 → w �
     simp [uc, χ.zero_of_le_dist (by rw [dist_eq_norm]; exact hw)]
   have huc_zero {w : ℂ} (hw : ‖w - 1‖ ≤ 1 / 4) : uc w = 0 := by
     simp [uc, χ.one_of_mem_closedBall (by rw [mem_closedBall, dist_eq_norm]; exact hw)]
-  refine ⟨uc, huc_eq, huc_zero, fun {w} hw ↦ ?_, fun {w} hw ↦ ?_, fun {w} h₀ ↦ ?_⟩
-  · filter_upwards [(isOpen_lt (continuous_id.sub continuous_const).norm
+  have huc_near_zero {w : ℂ} (hw : ‖w - 1‖ < 1 / 4) : uc =ᶠ[𝓝 w] fun _ ↦ 0 := by
+    filter_upwards [(isOpen_lt (continuous_id.sub continuous_const).norm
       continuous_const).mem_nhds hw] with z hz using huc_zero hz.le
+  refine ⟨uc, huc_eq, huc_zero, huc_near_zero, fun {w} hw ↦ ?_, fun {w} h₀ ↦ ?_⟩
   · filter_upwards [(isOpen_lt continuous_const
       (continuous_id.sub continuous_const).norm).mem_nhds hw] with z hz using huc_eq hz.le
   · by_cases h₁ : w = 1
     · subst h₁
-      refine (contDiffAt_const (c := (0 : V))).congr_of_eventuallyEq ?_
-      filter_upwards [(isOpen_lt (continuous_id.sub continuous_const).norm
-        continuous_const).mem_nhds (show ‖(1 : ℂ) - 1‖ < 1 / 4 by norm_num)] with z hz using
-        huc_zero hz.le
+      exact (contDiffAt_const (c := (0 : V))).congr_of_eventuallyEq
+        (huc_near_zero (by norm_num))
     · exact (contDiffAt_const.sub χ.contDiffAt).smul (hu w h₀ h₁)
 
 /-- The integral of the area density over the annulus about `0` of the cut-off map, outside the
@@ -181,7 +186,8 @@ private theorem integral_cutoff_sdiff (ω : SymplecticForm V) {u uc : ℂ → V}
     refine ⟨?_, ?_⟩ <;> simp only [sub_zero] <;> linarith
   have hI₀ : ∫ z in A₀, ω (fderiv ℝ uc z 1) (fderiv ℝ uc z I) =
       ω.circleArea u 0 ρ - ω.circleArea u 0 r := by
-    rw [integral_annulus ω 0 hr₀ (by linarith) fun z hz ↦ huc (Metric.ne_of_mem_annulus hr₀ hz)]
+    rw [integral_annulus ω 0 hr₀ (by linarith) fun z hz ↦
+      huc (Metric.ne_of_norm_sub_pos (hr₀.trans_le hz.1))]
     congr 1 <;> refine circleArea_congr ω fun θ ↦ huc_eq ?_
     · have := norm_sub_norm_le (circleMap 0 ρ θ) 1
       rw [norm_circleMap_zero, abs_of_nonneg (by linarith), norm_one] at this
@@ -192,17 +198,14 @@ private theorem integral_cutoff_sdiff (ω : SymplecticForm V) {u uc : ℂ → V}
   have hAu : ∫ z in A₀ \ ball 1 (3 / 4), ω (fderiv ℝ uc z 1) (fderiv ℝ uc z I) =
       ∫ z in A₀ \ ball 1 (3 / 4), ω (fderiv ℝ u z 1) (fderiv ℝ u z I) :=
     setIntegral_congr_fun hA.measurableSet fun z hz ↦ by
-      rw [(huc_near_eq (by
-        have := hz.2
-        rw [mem_ball, dist_eq_norm, not_lt] at this
-        linarith)).fderiv_eq]
+      rw [(huc_near_eq (by linarith [le_norm_sub_one_of_mem_sdiff_ball hz])).fderiv_eq]
   have hAsplit : ∫ z in A₀, ω (fderiv ℝ uc z 1) (fderiv ℝ uc z I) =
       (∫ z in A₀ \ ball 1 (3 / 4), ω (fderiv ℝ uc z 1) (fderiv ℝ uc z I)) +
         ∫ z in ball (1 : ℂ) (3 / 4), ω (fderiv ℝ uc z 1) (fderiv ℝ uc z I) := by
     conv_lhs => rw [← sdiff_union_of_subset hballA₀]
     exact setIntegral_union disjoint_sdiff_left measurableSet_ball
       (integrableOn_fderiv_apply_of_contDiffAt ω hA fun z hz ↦
-        (huc (Metric.ne_of_mem_annulus hr₀ hz.1)).of_le (by norm_num))
+        (huc (Metric.ne_of_norm_sub_pos (hr₀.trans_le hz.1.1))).of_le (by norm_num))
       ((integrableOn_fderiv_apply_of_contDiffAt ω (isCompact_closedBall 1 (3 / 4))
         fun z hz ↦ (huc (ne_zero_of_norm_sub_one_lt
           (by rw [mem_closedBall, dist_eq_norm] at hz; linarith))).of_le (by norm_num)).mono_set
@@ -263,17 +266,14 @@ private theorem integral_truncation_eq (ω : SymplecticForm V) {u : ℂ → V} {
   set B : Set ℂ := {z : ℂ | r ≤ ‖z - 1‖ ∧ ‖z - 1‖ ≤ 3 / 4}
   have hA : IsCompact A := (isCompact_annulus 0 r ρ).diff isOpen_ball
   have hB : IsCompact B := isCompact_annulus 1 r (3 / 4)
-  have hAfar {z : ℂ} (hz : z ∈ A) : 3 / 4 ≤ ‖z - 1‖ := by
-    have := hz.2
-    rwa [mem_ball, dist_eq_norm, not_lt] at this
   rw [truncation_eq_union hr_def hρ_def (by linarith) (by linarith),
     setIntegral_union (Set.disjoint_left.2 fun z (hzA : z ∈ A)
       (hzB : z ∈ B ∩ ball (1 : ℂ) (3 / 4)) ↦ hzA.2 hzB.2)
       (hB.measurableSet.inter measurableSet_ball)
       (integrableOn_fderiv_apply_of_contDiffAt ω hA fun z hz ↦
-        (hu z (Metric.ne_of_mem_annulus hr₀ hz.1) fun h ↦ by
+        (hu z (Metric.ne_of_norm_sub_pos (hr₀.trans_le hz.1.1)) fun h ↦ by
           subst h
-          have := hAfar hz
+          have := le_norm_sub_one_of_mem_sdiff_ball hz
           norm_num at this).of_le (by norm_num))
       ((integrableOn_fderiv_apply_of_contDiffAt ω hB fun z hz ↦
         (hu z (ne_zero_ne_one_of_mem_annulus hr₀ hz).1

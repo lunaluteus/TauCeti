@@ -12,8 +12,8 @@ public import Mathlib.Topology.MetricSpace.ProperSpace
 # Closed annuli in normed groups
 
 The closed annulus `{z | a ≤ ‖z - c‖ ∧ ‖z - c‖ ≤ b}` about `c` is compact in a proper space
-(`Metric.isCompact_annulus`), and when its inner radius is positive it does not contain its centre
-(`Metric.ne_of_mem_annulus`).
+(`Metric.isCompact_annulus`), and a point at positive distance from `c` is not `c`
+(`Metric.ne_of_norm_sub_pos`).
 -/
 
 public section
@@ -22,13 +22,11 @@ open Metric Set
 
 namespace Metric
 
-/-- A point of a closed annulus with positive inner radius is not its centre. -/
-theorem ne_of_mem_annulus {E : Type*} [SeminormedAddCommGroup E] {c z : E} {r ρ : ℝ}
-    (hr : 0 < r) (hz : z ∈ {z : E | r ≤ ‖z - c‖ ∧ ‖z - c‖ ≤ ρ}) : z ≠ c := by
+/-- A point at positive distance from `c` is not `c`. -/
+theorem ne_of_norm_sub_pos {E : Type*} [SeminormedAddCommGroup E] {c z : E}
+    (hz : 0 < ‖z - c‖) : z ≠ c := by
   rintro rfl
-  have := hz.1
-  simp only [sub_self, norm_zero] at this
-  linarith
+  simp at hz
 
 /-- A closed annulus is compact in a proper space. -/
 theorem isCompact_annulus {E : Type*} [SeminormedAddCommGroup E] [ProperSpace E] (c : E)
