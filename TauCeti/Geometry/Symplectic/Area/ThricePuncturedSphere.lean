@@ -92,7 +92,7 @@ variable [FiniteDimensional ℝ V]
 
 /-- Stokes' formula on a closed annulus, in terms of circle areas. -/
 private theorem integral_annulus (ω : SymplecticForm V) {u : ℂ → V} (c : ℂ) {a b : ℝ}
-    (ha : 0 < a) (hab : a ≤ b)
+    (ha : 0 ≤ a) (hab : a ≤ b)
     (hu : ∀ z ∈ {z : ℂ | a ≤ ‖z - c‖ ∧ ‖z - c‖ ≤ b}, ContDiffAt ℝ 2 u z) :
     ∫ z in {z : ℂ | a ≤ ‖z - c‖ ∧ ‖z - c‖ ≤ b}, ω (fderiv ℝ u z 1) (fderiv ℝ u z I) =
       ω.circleArea u c b - ω.circleArea u c a := by
@@ -195,7 +195,7 @@ private theorem integral_cutoff_sdiff (ω : SymplecticForm V) {u uc : ℂ → V}
     refine ⟨?_, ?_⟩ <;> simp only [sub_zero] <;> linarith
   have hI₀ : ∫ z in A₀, ω (fderiv ℝ uc z 1) (fderiv ℝ uc z I) =
       ω.circleArea u 0 ρ - ω.circleArea u 0 r := by
-    rw [integral_annulus ω 0 hr₀ (by linarith) fun z hz ↦
+    rw [integral_annulus ω 0 hr₀.le (by linarith) fun z hz ↦
       huc (norm_sub_pos_iff.1 (hr₀.trans_le hz.1))]
     congr 1 <;> refine circleArea_congr ω fun θ ↦ huc_eq ?_
     · have := norm_sub_norm_le (circleMap 0 ρ θ) 1
@@ -257,7 +257,7 @@ private theorem integral_annulus_one (ω : SymplecticForm V) {u : ℂ → V} {r 
     (hr : r ≤ 1 / 10) (hu : ∀ w : ℂ, w ≠ 0 → w ≠ 1 → ContDiffAt ℝ 2 u w) :
     ∫ z in {z : ℂ | r ≤ ‖z - 1‖ ∧ ‖z - 1‖ ≤ 3 / 4}, ω (fderiv ℝ u z 1) (fderiv ℝ u z I) =
       ω.circleArea u 1 (3 / 4) - ω.circleArea u 1 r :=
-  integral_annulus ω 1 hr₀ (by linarith) fun _ hz ↦
+  integral_annulus ω 1 hr₀.le (by linarith) fun _ hz ↦
     hu _ (ne_zero_ne_one_of_mem_annulus hr₀ hz).1 (ne_zero_ne_one_of_mem_annulus hr₀ hz).2
 
 /-- The area integral over the truncation is the integral over the part of the annulus about `0`
