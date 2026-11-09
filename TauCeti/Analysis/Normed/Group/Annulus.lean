@@ -12,8 +12,7 @@ public import Mathlib.Topology.MetricSpace.ProperSpace
 # Closed annuli in normed groups
 
 The closed annulus `{z | a ≤ ‖z - c‖ ∧ ‖z - c‖ ≤ b}` about `c` is compact in a proper space
-(`Metric.isCompact_annulus`), and a point at positive distance from `c` is not `c`
-(`Metric.ne_of_norm_sub_pos`).
+(`Metric.isCompact_annulus`).
 -/
 
 public section
@@ -21,12 +20,6 @@ public section
 open Metric Set
 
 namespace Metric
-
-/-- A point at positive distance from `c` is not `c`. -/
-theorem ne_of_norm_sub_pos {E : Type*} [SeminormedAddCommGroup E] {c z : E}
-    (hz : 0 < ‖z - c‖) : z ≠ c := by
-  rintro rfl
-  simp at hz
 
 /-- A closed annulus is compact in a proper space. -/
 theorem isCompact_annulus {E : Type*} [SeminormedAddCommGroup E] [ProperSpace E] (c : E)
