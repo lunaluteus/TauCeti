@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Normed.Lp.ProdLp
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Average
+import TauCeti.MeasureTheory.Function.Lp.Const
 import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 import TauCeti.MeasureTheory.Function.Lp.Norm
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
@@ -128,8 +129,6 @@ exponent restrictions `1 ≤ p < ∞` or `1 ≤ q`.
   has vanishing average over a set of finite positive measure vanishes almost everywhere there.
 * `TauCeti.average_rpow_le_average_add_const_rpow`: for `f ≥ 0` in `Lᵖ` on a finite measure
   space, the average of `f ^ p` is at most that of `(f + δ) ^ p`.
-* `TauCeti.integrable_add_const_rpow`: `(f + c) ^ p` is integrable for `f ≥ 0` in `Lᵖ` on a finite
-  measure space and `c ≥ 0`.
 * `TauCeti.tendsto_average_add_rpow`: dominated convergence for the averages of
   `(f + δ k) ^ p` for `f` in `Lᵖ` on a finite measure space and `δ k ≥ 0` tending to `0`.
 -/
@@ -838,18 +837,6 @@ theorem integrable_and_average_rpow_le {α : Type*} [MeasurableSpace α]
   refine ⟨hint, ?_⟩
   rw [average_eq, average_eq]
   exact smul_le_smul_of_nonneg_left (integral_mono_ae hint hint' hle) (by positivity)
-
-/-- For `f ≥ 0` in `Lᵖ` and `p > 0`, the function `(f + c) ^ p` is integrable on a finite measure
-space for every constant `c ≥ 0`. -/
-theorem integrable_add_const_rpow {α : Type*} [MeasurableSpace α]
-    {μ : Measure α} [IsFiniteMeasure μ] {f : α → ℝ} {p c : ℝ} (hp : 0 < p) (hc : 0 ≤ c)
-    (hf : MemLp f (ENNReal.ofReal p) μ) (hf0 : ∀ᵐ y ∂μ, 0 ≤ f y) :
-    Integrable (fun y => (f y + c) ^ p) μ := by
-  have hmem : MemLp (fun y => f y + c) (ENNReal.ofReal p) μ := hf.add (memLp_const c)
-  refine (hmem.integrable_norm_rpow (ENNReal.ofReal_pos.2 hp).ne'
-    ENNReal.ofReal_ne_top).congr ?_
-  filter_upwards [hf0] with y hy
-  rw [ENNReal.toReal_ofReal hp.le, Real.norm_of_nonneg (by linarith)]
 
 /-- Dominated convergence for the averages of `(f + δ k)^p`, for `f ≥ 0` in `Lᵖ` on a finite
 measure space, `0 < p` and `δ k ≥ 0` tending to `0`: `⨍ (f + δ k)^p → ⨍ f^p`. -/
