@@ -59,25 +59,6 @@ theorem exponent_eq_and_unit_conj {E : Type*} [NormedAddCommGroup E] [NormedSpac
   filter_upwards [hform₂, hr, hκt.eventually hform₁] with b h₂ h₃ h₁ hb0
   rw [← h₂ hb0, h₃ hb0, h₁ (by simpa only [ne_eq, map_eq_zero] using hb0)]
 
-/-- Two continuous extensions across the hyperplane `z = 0` of conjugation-related branches are
-conjugation-related on the whole ball, provided the branches are on the punctured ball. -/
-theorem eqOn_conj_comp_of_eqOn_punctured {E : Type*} [TopologicalSpace E]
-    {U : Set E} {R' : ℝ} {k : ℕ} {τ : E → E}
-    {g₁ g₂ r₁ r₂ : E × ℂ → ℂ} (hg₁ : ContinuousOn g₁ (U ×ˢ ball 0 R'))
-    (hg₂ : ContinuousOn g₂ (U ×ˢ ball 0 R'))
-    (he₁ : EqOn g₁ (fun b ↦ b.2 ^ k * r₁ b) (U ×ˢ (ball 0 R' \ {0})))
-    (he₂ : EqOn g₂ (fun b ↦ b.2 ^ k * r₂ b) (U ×ˢ (ball 0 R' \ {0})))
-    (hκ : ContinuousOn (fun b : E × ℂ ↦ (τ b.1, conj b.2)) (U ×ˢ ball 0 R'))
-    (hκT : MapsTo (fun b : E × ℂ ↦ (τ b.1, conj b.2)) (U ×ˢ ball 0 R') (U ×ˢ ball 0 R'))
-    (hκS : MapsTo (fun b : E × ℂ ↦ (τ b.1, conj b.2)) (U ×ˢ (ball 0 R' \ {0}))
-      (U ×ˢ (ball 0 R' \ {0})))
-    (hr : ∀ b ∈ U ×ˢ (ball 0 R' \ {0}), r₂ b = conj (r₁ (τ b.1, conj b.2))) :
-    EqOn g₂ (fun b ↦ conj (g₁ (τ b.1, conj b.2))) (U ×ˢ ball 0 R') := by
-  refine eqOn_prod_of_eqOn_prod_diff_singleton (c := (0 : ℂ)) isOpen_ball
-    hg₂ (Complex.continuous_conj.comp_continuousOn (hg₁.comp hκ hκT)) ?_
-  intro b hb
-  simp only [he₂ hb, he₁ (hκS hb), hr b hb, map_mul, map_pow, Complex.conj_conj]
-
 end TauCeti
 
 namespace TauCeti.Polynomial
