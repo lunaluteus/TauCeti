@@ -757,7 +757,7 @@ theorem isInternal_opGrade : DirectSum.IsInternal (opGrade k Q) :=
 
 end OppositeGrade
 
-section OppositeGradedMonoid
+section OppositeGradedAlgebra
 
 variable (k : Type w) (Q : Type u) [CommSemiring k] [Quiver.{v} Q]
 
@@ -769,12 +769,6 @@ instance opGrade.gradedMonoid [Finite Q] : SetLike.GradedMonoid (opGrade k Q) wh
     rw [mem_opGrade_iff, MulOpposite.unop_mul, add_comm]
     exact SetLike.mul_mem_graded ((mem_opGrade_iff k Q).1 hy)
       ((mem_opGrade_iff k Q).1 hx)
-
-end OppositeGradedMonoid
-
-section OppositeGradedAlgebra
-
-variable (k : Type w) (Q : Type u) [CommRing k] [Quiver.{v} Q]
 
 /-- The ordinary opposite path algebra is graded by path length. -/
 noncomputable instance opGrade.gradedAlgebra [Finite Q] : GradedAlgebra (opGrade k Q) :=
