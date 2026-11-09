@@ -10,7 +10,6 @@ public import TauCeti.Analysis.PDE.Yamabe.SphereConstant
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.Analysis.PDE.Yamabe.Bubble.Cutoff
-import TauCeti.Analysis.SpecialFunctions.Pow.Real
 import TauCeti.Geometry.Manifold.ContMDiff.ChartCutoff
 import TauCeti.Geometry.Manifold.Riemannian.VolumeDensity.Volume
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
@@ -448,6 +447,42 @@ private theorem div_rpow_le_distortion_bound {m : ℕ} {q η t S A B D N J : ℝ
         have : t ^ m ≠ 0 := pow_ne_zero _ ht0.ne'
         field_simp
     _ ≤ _ := by gcongr
+
+/-- The set of points whose rescaled coordinate `Ψ y = t⁻¹ • L (y - x)` lies in the support of a
+function supported in the unit ball is contained in a compact subset of the ball of radius `R`
+around `x`, as soon as `t ‖L⁻¹‖ < R`. -/
+private theorem exists_isCompact_subset_ball_forall_mem_tsupport {X Y : Type*}
+    [NormedAddCommGroup X] [NormedSpace ℝ X] [NormedAddCommGroup Y] [NormedSpace ℝ Y]
+    (L : X ≃L[ℝ] Y) (x : X) {t R : ℝ} (ht0 : 0 < t) (htR : t * ‖(L.symm : Y →L[ℝ] X)‖ < R)
+    {v : Y → ℝ} (hvc : HasCompactSupport v) (hvsupp : tsupport v ⊆ ball 0 1) {Ψ : X → Y}
+    (hΨ : Ψ = fun y ↦ t⁻¹ • L (y - x)) :
+    ∃ K : Set X, IsCompact K ∧ K ⊆ ball x R ∧ ∀ y, Ψ y ∈ tsupport v → y ∈ K := by
+  set C := ‖(L.symm : Y →L[ℝ] X)‖
+  have hΨ_eq (y : X) : y = x + L.symm (t • Ψ y) := by
+    simp [hΨ, smul_smul, ht0.ne']
+  refine ⟨(fun z ↦ x + L.symm (t • z)) '' tsupport v, hvc.isCompact.image (by fun_prop), ?_,
+    fun y hy ↦ ⟨Ψ y, hy, (hΨ_eq y).symm⟩⟩
+  rintro _ ⟨z, hz, rfl⟩
+  have hz1 : ‖z‖ < 1 := mem_ball_zero_iff.1 (hvsupp hz)
+  rw [mem_ball, dist_eq_norm, add_sub_cancel_left]
+  calc ‖L.symm (t • z)‖
+      ≤ C * ‖t • z‖ := (L.symm : Y →L[ℝ] X).le_opNorm _
+    _ = t * C * ‖z‖ := by rw [norm_smul, Real.norm_of_nonneg ht0.le]; ring
+    _ ≤ t * C := mul_le_of_le_one_right (by positivity) hz1.le
+    _ < R := htR
+
+/-- A continuous function of the rescaled coordinate `Ψ`, vanishing outside a set `T`, is
+integrable and supported in the ball of radius `R`, when the preimage of `T` under the continuous
+map `Ψ` lies in a compact subset of that ball. -/
+private theorem integrable_comp_and_support_subset_ball {X Y : Type*} [NormedAddCommGroup X]
+    [TopologicalSpace Y] [MeasurableSpace X] [OpensMeasurableSpace X]
+    {μ : Measure X} [IsFiniteMeasureOnCompacts μ] {R : ℝ} {x : X} {Ψ : X → Y}
+    (hΨc : Continuous Ψ) {K : Set X} (hK : IsCompact K) (hKR : K ⊆ ball x R) {T : Set Y}
+    (hΨK : ∀ y, Ψ y ∈ T → y ∈ K) {k : Y → ℝ} (hk : Continuous k) (hkz : ∀ z ∉ T, k z = 0) :
+    Integrable (fun y ↦ k (Ψ y)) μ ∧ Function.support (fun y ↦ k (Ψ y)) ⊆ ball x R :=
+  ⟨(hk.comp hΨc).integrable_of_hasCompactSupport
+    (HasCompactSupport.intro hK fun y hy ↦ hkz _ fun h ↦ hy (hΨK y h)),
+    fun y hy ↦ hKR (hΨK y (by_contra fun h ↦ hy (hkz _ h)))⟩
 
 omit [IsContMDiffRiemannianBundle I ∞ E (fun x : M ↦ TangentSpace I x)] in
 /-- **The transplanted test function.** Given orthonormal coordinates `L` at `p` (see
