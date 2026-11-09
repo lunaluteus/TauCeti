@@ -305,8 +305,8 @@ private theorem lintegral_rpow_le_of_meas_ofReal_lt_le_of_measurable_of_sFinite 
     lintegral_rpow_sub_sub_one_mul_setLIntegral_lt_le (μ := μ) hf.aemeasurable hp₀ hlt₀ hc
   have hhigh :=
     lintegral_rpow_sub_sub_one_mul_setLIntegral_le_le (μ := μ) hf.aemeasurable hlt₁ hc
-  have hg₀ := measurable_rpow_mul_setLIntegral_lt (μ := μ) (c := c) hf p₀ (p - p₀ - 1)
-  have hg₁ := measurable_rpow_mul_setLIntegral_le (μ := μ) (c := c) hf p₁ (p - p₁ - 1)
+  have hg₀ := measurable_rpow_mul_setLIntegral_lt (μ := μ) (f := f) (c := c) p₀ (p - p₀ - 1)
+  have hg₁ := measurable_rpow_mul_setLIntegral_le (μ := μ) (f := f) (c := c) p₁ (p - p₁ - 1)
   have hm₀ := hg₀.const_mul A₀
   rw [lintegral_rpow_eq_lintegral_meas_ofReal_lt_mul ν hu hp]
   calc ENNReal.ofReal p *
