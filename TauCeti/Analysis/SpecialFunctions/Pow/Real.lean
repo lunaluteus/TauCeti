@@ -266,11 +266,15 @@ theorem tendsto_pow_div_mul_sub_pow_atTop {n : ℕ} {ω : ℝ} (hn0 : n ≠ 0) (
   rw [div_pow, one_sub_div (pow_pos hD0 n).ne', inv_div]
   field_simp
 
-/-- If `a * b ≤ K` and `t⁻¹ ≤ c * b ^ q` with `t > 0`, `c ≥ 0` and `q ≥ 0`, then
-`a ^ q ≤ K ^ q * c * t`: multiply the crossover estimate by the lower bound. -/
-theorem rpow_le_mul_of_mul_le_of_inv_le {a b K c t q : ℝ} (hq : 0 ≤ q) (hc : 0 ≤ c)
+/-- If `a * b ≤ K` and `t⁻¹ ≤ c * b ^ q` with `a, b ≥ 0`, `t > 0` and `q ≥ 0`, then
+`a ^ q ≤ K ^ q * c * t`. -/
+theorem rpow_le_mul_of_mul_le_of_inv_le {a b K c t q : ℝ} (hq : 0 ≤ q)
     (ha : 0 ≤ a) (hb : 0 ≤ b) (h : a * b ≤ K) (hx : t⁻¹ ≤ c * b ^ q) (ht : 0 < t) :
     a ^ q ≤ K ^ q * c * t := by
+  have hc : 0 ≤ c := by
+    by_contra hc
+    have := mul_nonpos_of_nonpos_of_nonneg (not_le.1 hc).le (Real.rpow_nonneg hb q)
+    linarith [inv_pos.2 ht]
   have hone : 1 ≤ c * b ^ q * t := by
     rw [← inv_mul_cancel₀ ht.ne']
     exact mul_le_mul_of_nonneg_right hx ht.le

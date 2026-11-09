@@ -157,7 +157,7 @@ private theorem exists_pos_ae_setAverage_rpow_rpow_inv_le_mul_value_of_pos [None
   rw [e] at hx
   -- Multiply the crossover estimate by the lower bound.
   rw [mul_assoc (K' ^ p₀⁻¹) D]
-  exact Real.rpow_le_mul_of_mul_le_of_inv_le (inv_nonneg.2 hp₀.le) (by positivity) hAp hAn
+  exact Real.rpow_le_mul_of_mul_le_of_inv_le (inv_nonneg.2 hp₀.le) hAp hAn
     hcross' hx hux
 
 /-- **Moser's weak Harnack inequality at a small exponent.** Let `n ≥ 1` be the dimension. There

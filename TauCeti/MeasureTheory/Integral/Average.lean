@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Normed.Lp.ProdLp
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Average
+import TauCeti.MeasureTheory.Function.L1Space.Integrable
 import TauCeti.MeasureTheory.Function.Lp.Const
 import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 import TauCeti.MeasureTheory.Function.Lp.Norm
@@ -848,7 +849,7 @@ theorem tendsto_average_add_rpow {α : Type*} [MeasurableSpace α]
       Filter.atTop (nhds (⨍ y, f y ^ p ∂μ)) := by
   -- Eventually `0 ≤ δ ≤ 1`, so `(f + δ)^p ≤ (f + 1)^p`, which is integrable since `f ∈ Lᵖ`.
   have hbound : Integrable (fun y => (f y + 1) ^ p) μ :=
-    integrable_add_const_rpow hp zero_le_one hf hf0
+    (hf.add (memLp_const 1)).integrable_rpow hp
   have hlim : Filter.Tendsto (fun k : ℕ => ∫ y, (f y + δ k) ^ p ∂μ)
       Filter.atTop (nhds (∫ y, f y ^ p ∂μ)) := by
     refine tendsto_integral_filter_of_dominated_convergence _
@@ -893,7 +894,7 @@ theorem average_rpow_le_average_add_const_rpow {α : Type*} [MeasurableSpace α]
     (hδ : 0 ≤ δ) (hf : MemLp f (ENNReal.ofReal p) m) (hf0 : ∀ᵐ y ∂m, 0 ≤ f y) :
     ⨍ y, f y ^ p ∂m ≤ ⨍ y, (f y + δ) ^ p ∂m := by
   exact (integrable_and_average_rpow_le hp hδ hf.aestronglyMeasurable hf0
-    (integrable_add_const_rpow hp hδ hf hf0)).2
+    ((hf.add (memLp_const δ)).integrable_rpow hp)).2
 
 end Rpow
 
