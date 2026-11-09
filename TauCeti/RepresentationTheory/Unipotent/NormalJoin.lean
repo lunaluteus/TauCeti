@@ -144,7 +144,7 @@ private theorem _root_.Representation.isNilpotent_sub_one_of_normal_isUnipotent
           rw [finrank_span_singleton hx, hdim] at hsum
           omega
         have hinv : ∀ g, K ∙ x ≤ (K ∙ x).comap (rho g) := fun g ↦
-          rho.le_comap_of_fixed _ g (hfix g)
+          (K ∙ x).le_comap_of_fixed (rho g) (hfix g)
         exact rho.isNilpotent_sub_one_of_quotient (K ∙ x) hinv (hfix g) <|
           ih _ hqdim (rho.quotient (K ∙ x) hinv)
             (fun u ↦ rho.isNilpotent_quotient_sub_one _ _ (hU u))
