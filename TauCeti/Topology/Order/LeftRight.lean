@@ -25,7 +25,7 @@ replaces a supremum over uncountably many times by a countable one.
   by a value above `a` at `T` or at a point of `(D ∪ C) ∩ (-∞, T]`.
 * `TopologicalSpace.exists_countable_subset_Iic_exists_mem_lt`: in a second countable space,
   one countable set of times `≤ T` serves for every function right-continuous before `T`.
-* `eventually_nhdsGT_pos_and_mul_abs_lt`: as `h → 0⁺`, eventually `0 < h` and `c * |h| < r`.
+* `Real.eventually_nhdsGT_pos_and_mul_abs_lt`: as `h → 0⁺`, eventually `0 < h` and `c * |h| < r`.
 -/
 
 public section
@@ -69,7 +69,7 @@ theorem TopologicalSpace.exists_countable_subset_Iic_exists_mem_lt [SecondCounta
 
 open Filter Topology in
 /-- Along `h → 0⁺`, eventually `0 < h` and `c * |h| < r`, for any `c` and positive `r`. -/
-theorem eventually_nhdsGT_pos_and_mul_abs_lt (c : ℝ) {r : ℝ} (hr : 0 < r) :
+theorem Real.eventually_nhdsGT_pos_and_mul_abs_lt (c : ℝ) {r : ℝ} (hr : 0 < r) :
     ∀ᶠ h : ℝ in 𝓝[>] 0, 0 < h ∧ c * |h| < r := by
   have hlt : ∀ᶠ h : ℝ in 𝓝 (0 : ℝ), c * |h| < r := by
     have : Continuous fun h : ℝ ↦ c * |h| := continuous_const.mul continuous_abs
