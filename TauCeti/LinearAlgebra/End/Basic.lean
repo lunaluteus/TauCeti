@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.BigOperators.Group.List.Basic
 public import Mathlib.Algebra.Module.LinearMap.End
+public import Mathlib.Algebra.Module.Submodule.Invariant
 public import Mathlib.Algebra.Module.Submodule.Map
 public import Mathlib.Algebra.Module.Torsion.Free
 public import Mathlib.Algebra.Ring.GeomSum
@@ -31,8 +32,8 @@ Rescaling an involution by a scalar `μ` with `μ * μ = 1` gives an endomorphis
 A finite nontrivial module has more than one endomorphism (`Module.End.one_lt_natCard`).
 
 A submodule fixed pointwise by an endomorphism `f` is invariant under `f`
-(`Submodule.le_comap_of_fixed`), and invariance under `f` gives invariance under `f - 1`
-(`Submodule.le_comap_sub_one`).
+(`Submodule.le_comap_of_fixed`), and a submodule invariant under two endomorphisms is invariant
+under their difference (`Module.End.invtSubmodule_inf_invtSubmodule_le_invtSubmodule_sub`).
 -/
 
 public section
@@ -101,13 +102,16 @@ theorem le_comap_of_fixed {R V : Type*} [Semiring R] [AddCommMonoid V] [Module R
     (hfix : ∀ y ∈ p, f y = y) : p ≤ p.comap f :=
   fun y hy ↦ by rw [Submodule.mem_comap, hfix y hy]; exact hy
 
-variable {R V : Type*} [Ring R] [AddCommGroup V] [Module R V]
-
-/-- A submodule invariant under an endomorphism `f` is also invariant under `f - 1`. -/
-theorem le_comap_sub_one (p : Submodule R V) (f : Module.End R V)
-    (hp : p ≤ p.comap f) : p ≤ p.comap (f - 1) :=
-  fun x hx ↦ by
-    rw [Submodule.mem_comap, LinearMap.sub_apply, one_apply_eq_self]
-    exact p.sub_mem (Submodule.mem_comap.mp (hp hx)) hx
-
 end Submodule
+
+namespace Module.End
+
+variable {R V : Type*} [Ring R] [AddCommGroup V] [Module R V] (f g : End R V)
+
+/-- A submodule invariant under two endomorphisms is invariant under their difference. This is the
+analogue of `Module.End.invtSubmodule_inf_invtSubmodule_le_invtSubmodule_add`. -/
+theorem invtSubmodule_inf_invtSubmodule_le_invtSubmodule_sub :
+    f.invtSubmodule ⊓ g.invtSubmodule ≤ (f - g).invtSubmodule :=
+  fun p ⟨hfp, hgp⟩ _ hx ↦ p.sub_mem (hfp hx) (hgp hx)
+
+end Module.End

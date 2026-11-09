@@ -58,7 +58,9 @@ variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [Module R V]
 induced by `rho g - 1` via `Submodule.mapQ`. -/
 theorem _root_.Representation.quotient_sub_one_eq_mapQ (rho : Representation R G V)
     (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) (g : G) :
-    rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) (p.le_comap_sub_one (rho g) (hp g)) := by
+    rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) ((Module.End.mem_invtSubmodule _).1
+      (Module.End.invtSubmodule_inf_invtSubmodule_le_invtSubmodule_sub (rho g) 1
+        ⟨hp g, fun _ hx ↦ hx⟩)) := by
   ext x
   simp [Representation.quotient_apply, Submodule.mapQ_apply]
 
@@ -77,7 +79,9 @@ theorem _root_.Representation.isNilpotent_sub_one_of_quotient
     {g : G} (hfix : ∀ y ∈ p, rho g y = y) (hn : IsNilpotent (rho.quotient p hp g - 1)) :
     IsNilpotent (rho g - 1) := by
   refine p.isNilpotent_of_isNilpotent_restrict_of_isNilpotent_mapQ (rho g - 1)
-    (p.le_comap_sub_one (rho g) (hp g)) ?_ ?_
+    ((Module.End.mem_invtSubmodule _).1
+      (Module.End.invtSubmodule_inf_invtSubmodule_le_invtSubmodule_sub (rho g) 1
+        ⟨hp g, fun _ hx ↦ hx⟩)) ?_ ?_
   · convert IsNilpotent.zero
     ext y
     simp [hfix y y.2]
