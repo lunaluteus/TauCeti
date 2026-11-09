@@ -83,8 +83,8 @@ theorem sum_sum_eval_mul {ι : Type*} {X : ι → Type*} {R : Type*} [Fintype ι
 
 /-- Along an injective map the fibre above the value at `j` is the singleton `{j}`, so the product
 of `F` over it is `F j`. -/
-@[to_additive /-- Along an injective map the fibre above the value at `j` is the singleton `{j}`,
-so the sum of `F` over it is `F j`. -/]
+@[to_additive (attr := simp) /-- Along an injective map the fibre above the value at `j` is the
+singleton `{j}`, so the sum of `F` over it is `F j`. -/]
 theorem prod_filter_eq_apply_of_injective {ι κ M : Type*} [Fintype ι] [DecidableEq κ]
     [CommMonoid M] {g : ι → κ} (hg : Function.Injective g) (F : ι → M) (j : ι) :
     ∏ i with g i = g j, F i = F j := by
