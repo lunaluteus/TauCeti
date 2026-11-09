@@ -118,24 +118,25 @@ theorem thetaSeries_slash_S (hk : finrank ℝ E = 2 * k) :
     smul_eq_mul, zpow_neg, zpow_natCast]
   field_simp
 
-omit [MeasurableSpace E] [BorelSpace E] in
-/-- **The inversion law applied twice**: if `dim E = 2k`, then in weight `k`,
-`(Θ_L ∣[k] S) ∣[k] S = (-1)^k Θ_L`. This agrees with the action of `S² = -1`, which acts on
-weight `k` by `(-1)^k`; in odd weight it is not trivial, as for the lattice `ℤ²` in weight
-one. -/
-theorem thetaSeries_slash_S_slash_S (hk : finrank ℝ E = 2 * k) :
+omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
+  [DiscreteTopology L] [IsZLattice ℝ L] in
+/-- **The inversion law applied twice**: in weight `k`, `(Θ_L ∣[k] S) ∣[k] S = (-1)^k Θ_L`. This
+is the action of `S² = -1`, which acts on weight `k` by `(-1)^k`; in odd weight it is not trivial,
+as for the lattice `ℤ²` in weight one. -/
+theorem thetaSeries_slash_S_slash_S :
     (thetaSeries L ∣[(k : ℤ)] ModularGroup.S) ∣[(k : ℤ)] ModularGroup.S =
       (-1 : ℂ) ^ k • thetaSeries L := by
-  -- The statement involves no measure; the inversion law uses the Borel volume.
-  borelize E
-  have hc : (covolume L : ℂ) ≠ 0 := ofReal_ne_zero.mpr (covolume_ne_zero L MeasureTheory.volume)
-  have hI : (-I) ^ k * (-I) ^ k = (-1 : ℂ) ^ k := by rw [← mul_pow, neg_mul_neg, I_mul_I]
-  rw [thetaSeries_slash_S L hk, ModularForm.SL_smul_slash, thetaSeries_slash_S (dual L) hk,
-    dual_dual, covolume_dual, smul_smul]
-  congr 1
-  push_cast
-  rw [← hI]
-  field_simp
+  ext τ
+  have hS : ModularGroup.S • ModularGroup.S • τ = τ :=
+    by rw [modular_S_smul, modular_S_smul]; ext; simp [inv_neg]
+  have hσ : ((ModularGroup.S • τ : ℍ) : ℂ) = -(τ : ℂ)⁻¹ := by
+    rw [modular_S_smul]
+    simp [inv_neg]
+  have hτ : (τ : ℂ) ≠ 0 := τ.ne_zero
+  rw [ModularForm.SL_slash_apply, ModularForm.SL_slash_apply, hS, ModularGroup.denom_S,
+    ModularGroup.denom_S, hσ, Pi.smul_apply, smul_eq_mul, mul_assoc, mul_comm (thetaSeries L τ),
+    ← mul_zpow, ← mul_neg_one, show ((τ : ℂ)⁻¹ * -1 * τ) = -1 by field_simp, zpow_neg,
+    zpow_natCast, ← inv_pow, inv_neg, inv_one]
 
 omit [MeasurableSpace E] [BorelSpace E] in
 variable {L} in
