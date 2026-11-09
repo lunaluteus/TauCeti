@@ -454,15 +454,14 @@ variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
   {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G] [FiniteDimensional ℝ G]
   [MeasurableSpace G] [BorelSpace G]
 
-/-- Fubini for a compact set in a split space: if `F ≃L[ℝ] ℝ × G` and every slice
-`{y | (t, y) ∈ e S}` of the image of a compact set `S` is null for the Haar measure of `G`, then
+/-- Fubini for a measurable set in a split space: if `F ≃L[ℝ] ℝ × G` and almost every slice
+`{y | (t, y) ∈ e S}` of the image of a measurable set `S` is null for the Haar measure of `G`, then
 `S` is null for any additive Haar measure of `F`. -/
 theorem addHaar_eq_zero_of_prod_mk_preimage_image_eq_zero (e : F ≃L[ℝ] ℝ × G) {S : Set F}
-    (hS : IsCompact S) (h : ∀ t : ℝ, (addHaar : Measure G) (Prod.mk t ⁻¹' (e '' S)) = 0) :
+    (hS : MeasurableSet S) (h : ∀ᵐ t, (addHaar : Measure G) (Prod.mk t ⁻¹' (e '' S)) = 0) :
     ν S = 0 := by
   have hprod : ((volume : Measure ℝ).prod (addHaar : Measure G)) (e '' S) = 0 :=
-    measure_prod_null_of_ae_null (hS.image e.continuous).isClosed.measurableSet
-      (Filter.Eventually.of_forall h)
+    measure_prod_null_of_ae_null (e.toHomeomorph.measurableEmbedding.measurableSet_image.2 hS) h
   have := (e.toContinuousAddEquiv.quasiMeasurePreserving_addHaar ν
     ((volume : Measure ℝ).prod (addHaar : Measure G))).preimage_null hprod
   rwa [ContinuousLinearEquiv.toContinuousAddEquiv_coe,

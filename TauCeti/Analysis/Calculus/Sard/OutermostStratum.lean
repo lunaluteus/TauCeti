@@ -8,10 +8,8 @@ module
 public import TauCeti.Analysis.Calculus.Sard.VanishingDerivative
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 import Mathlib.Analysis.LocallyConvex.SeparatingDual
-import Mathlib.Analysis.Normed.Module.HahnBanach
 import TauCeti.Analysis.Calculus.FDeriv.Comp
 import TauCeti.Analysis.Calculus.FDeriv.CriticalSet
-import TauCeti.Analysis.Normed.Operator.Splitting.Basic
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.LocallyNull
 
@@ -164,7 +162,8 @@ private theorem addHaar_image_criticalPoints_inter_eq_zero {K : Set E} (hK : IsC
       ({z | (t, z) ∈ V} ∩ {z | ¬ Surjective (fderiv ℝ (fun w ↦ ρ (f (Θ (t, w)))) z)})) = 0) :
     ν (f '' ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K)) = 0 := by
   refine addHaar_eq_zero_of_prod_mk_preimage_image_eq_zero ν eF
-    (hK.image_inter_setOf_not_surjective_fderiv hfK hfK') fun t ↦ measure_mono_null ?_ (hrec t)
+    (hK.image_inter_setOf_not_surjective_fderiv hfK hfK').isClosed.measurableSet
+    (.of_forall fun t ↦ measure_mono_null ?_ (hrec t))
   rintro y ⟨-, ⟨x, ⟨hxc, hxK⟩, rfl⟩, hxy⟩
   obtain ⟨hxΘ, hxV⟩ := hKV x hxK
   rw [heF] at hxy
@@ -215,7 +214,8 @@ private theorem exists_pos_addHaar_image_criticalPoints_inter_closedBall_eq_zero
   · obtain ⟨hΘC, -, hΘU, hΘne⟩ := hVsub (t, z) hz
     have hΘt : ContDiffAt ℝ (k : ℕ∞ω) (fun w ↦ Θ (t, w)) z :=
       hΘC.comp z (contDiffAt_const.prodMk contDiffAt_id)
-    refine ContinuousLinearMap.surjective_fderiv_of_surjective_fderiv_comp φ ρ eF heF
+    refine ContinuousLinearMap.surjective_fderiv_of_surjective_fderiv_comp φ ρ
+      (by simpa [funext heF] using eF.injective)
       (γ := fun w ↦ Θ (t, w)) (z := z)
       (hΘt.differentiableAt hk) ((hf _ hΘU).differentiableAt hk) (c := t) ?_ ?_ hs
     · refine Filter.eventuallyEq_of_mem ((hVopen.preimage (by fun_prop)).mem_nhds hz) fun w hw ↦ ?_
@@ -299,10 +299,16 @@ private theorem addHaar_image_criticalPoints_eq_zero_aux (P : ℕ → ℕ → Pr
         simpa using not_not.1 (not_exists.1 hc v))
     obtain ⟨φ, hφ⟩ := SeparatingDual.exists_eq_one (R := ℝ) hv₀
     -- The two hyperplanes, and the splittings of the source and target along them.
-    obtain ⟨π, eE, heE⟩ :=
-      ContinuousLinearMap.exists_continuousLinearEquiv_prod_ker (φ.comp (fderiv ℝ f a))
-      (v₀ := v₀) hφ
-    obtain ⟨ρ, eF, heF⟩ := ContinuousLinearMap.exists_continuousLinearEquiv_prod_ker φ hφ
+    set sE : ℝ →L[ℝ] E := (ContinuousLinearMap.id ℝ ℝ).smulRight v₀
+    have hsE : Function.RightInverse sE (φ.comp (fderiv ℝ f a)) := fun t ↦ by simp [sE, hφ]
+    set sF : ℝ →L[ℝ] F := (ContinuousLinearMap.id ℝ ℝ).smulRight (fderiv ℝ f a v₀)
+    have hsF : Function.RightInverse sF φ := fun t ↦ by simp [sF, hφ]
+    set π := (φ.comp (fderiv ℝ f a)).projKerOfRightInverse sE hsE
+    set eE := ContinuousLinearEquiv.equivOfRightInverse (φ.comp (fderiv ℝ f a)) sE hsE
+    set ρ := φ.projKerOfRightInverse sF hsF
+    set eF := ContinuousLinearEquiv.equivOfRightInverse φ sF hsF
+    have heE : ∀ x, eE x = (φ (fderiv ℝ f a x), π x) := fun x ↦ rfl
+    have heF : ∀ x, eF x = (φ x, ρ x) := fun x ↦ rfl
     let mFk : MeasurableSpace ↥(LinearMap.ker (φ : F →ₗ[ℝ] ℝ)) := borel _
     have bFk : BorelSpace ↥(LinearMap.ker (φ : F →ₗ[ℝ] ℝ)) := ⟨rfl⟩
     have hEk : finrank ℝ ↥(LinearMap.ker ((φ.comp (fderiv ℝ f a) : E →L[ℝ] ℝ) : E →ₗ[ℝ] ℝ)) + 1 =

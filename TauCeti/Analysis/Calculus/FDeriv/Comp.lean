@@ -103,12 +103,12 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   [NormedAddCommGroup G₂] [NormedSpace 𝕜 G₂]
 
 /-- A critical point of a map yields a critical point of its slice along a level set of a
-functional `φ`. Precisely, let `(φ, ρ)` split `F` as `𝕜 × G`, let `γ` parametrize a family of
+functional `φ`. Precisely, let `(φ, ρ)` be jointly injective on `F`, let `γ` parametrize a family of
 points along which `φ ∘ f` is locally constant, and let `φ ∘ Df` be nonzero at `γ z`. If
 `ρ ∘ f ∘ γ` has surjective derivative at `z`, then `Df` is surjective at `γ z`; equivalently, if
 `γ z` is critical for `f`, then `z` is critical for the slice `ρ ∘ f ∘ γ`. -/
 theorem surjective_fderiv_of_surjective_fderiv_comp {f : E → F} {γ : G₁ → E} {z : G₁} {c : 𝕜}
-    (φ : F →L[𝕜] 𝕜) (ρ : F →L[𝕜] G₂) (eF : F ≃L[𝕜] 𝕜 × G₂) (heF : ∀ w, eF w = (φ w, ρ w))
+    (φ : F →L[𝕜] 𝕜) (ρ : F →L[𝕜] G₂) (hφρ : Injective fun w ↦ (φ w, ρ w))
     (hγ : DifferentiableAt 𝕜 γ z) (hf : DifferentiableAt 𝕜 f (γ z))
     (hconst : (fun w ↦ φ (f (γ w))) =ᶠ[𝓝 z] fun _ ↦ c)
     (hne : ∃ v, φ (fderiv 𝕜 f (γ z) v) ≠ 0)
@@ -130,9 +130,8 @@ theorem surjective_fderiv_of_surjective_fderiv_comp {f : E → F} {γ : G₁ →
     intro y hy
     obtain ⟨w, hw⟩ := hs (ρ y)
     rw [hGd.fderiv] at hw
-    refine ⟨T w, eF.injective ?_⟩
-    rw [heF, heF, hzero w, hy]
-    exact Prod.ext rfl hw
+    refine ⟨T w, hφρ ?_⟩
+    exact Prod.ext (by simp only [hzero w, hy]) hw
   obtain ⟨v, hv⟩ := hne
   intro w
   obtain ⟨u, hu⟩ := hker (w - (φ w / φ (A v)) • A v) (by simp [div_mul_cancel₀ _ hv])
