@@ -472,26 +472,13 @@ theorem map_linearEquiv {R M N ι : Type*} [Semiring R] [AddCommMonoid M]
     [AddCommMonoid N] [Module R M] [Module R N] [DecidableEq ι] {A : ι → Submodule R M}
     (h : DirectSum.IsInternal A) (e : M ≃ₗ[R] N) :
     DirectSum.IsInternal fun i => (A i).map e.toLinearMap := by
-  let Φ : (⨁ i, A i) ≃ₗ[R] ⨁ i, (A i).map e.toLinearMap :=
-    DFinsupp.mapRange.linearEquiv fun i => (A i).equivMapOfInjective e.toLinearMap e.injective
-  have hcomp : (DirectSum.coeLinearMap fun i => (A i).map e.toLinearMap) ∘ₗ Φ.toLinearMap =
-      e.toLinearMap ∘ₗ DirectSum.coeLinearMap A := by
-    refine DirectSum.linearMap_ext _ fun i => LinearMap.ext fun x => ?_
-    have hΦ : Φ (DirectSum.lof R ι (fun i => A i) i x) =
-        DirectSum.lof R ι (fun i => (A i).map e.toLinearMap) i
-          ((A i).equivMapOfInjective e.toLinearMap e.injective x) := by
-      simp only [Φ, DirectSum.lof_eq_of]
-      exact DFinsupp.mapRange_single (hf := fun _ => map_zero _)
-    simp [hΦ]
   -- For submodules, the additive recomposition map in `IsInternal` is the underlying function
   -- of the canonical linear recomposition map.
-  change Function.Bijective (DirectSum.coeLinearMap fun i => (A i).map e.toLinearMap)
   have hA : Function.Bijective (DirectSum.coeLinearMap A) := h
-  have : (DirectSum.coeLinearMap fun i => (A i).map e.toLinearMap) =
-      (e.toLinearMap ∘ₗ DirectSum.coeLinearMap A) ∘ₗ Φ.symm.toLinearMap := by
-    rw [← hcomp]; ext x; simp
-  rw [this]
-  exact (e.bijective.comp hA).comp Φ.symm.bijective
+  refine TauCeti.DirectSum.isInternal_of_lof
+    (e := fun i => (A i).equivMapOfInjective e.toLinearMap e.injective)
+    (E := (LinearEquiv.ofBijective (DirectSum.coeLinearMap A) hA).trans e) fun i x => ?_
+  simp [DirectSum.coeLinearMap_lof]
 
 /-- Prepending the zero submodule to a natural-number-indexed internal decomposition
 again gives an internal decomposition. -/
