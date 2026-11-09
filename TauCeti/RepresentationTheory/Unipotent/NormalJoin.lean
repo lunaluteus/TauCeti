@@ -7,6 +7,7 @@ module
 
 import TauCeti.Algebra.Group.Subgroup.Pointwise
 public import TauCeti.RepresentationTheory.Unipotent.Solvable
+import TauCeti.RepresentationTheory.Unipotent.Quotient
 import Mathlib.RepresentationTheory.Invariants
 import Mathlib.RingTheory.Nilpotent.Lemmas
 

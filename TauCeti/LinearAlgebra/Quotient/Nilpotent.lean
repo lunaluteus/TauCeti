@@ -38,12 +38,7 @@ theorem isNilpotent_of_isNilpotent_restrict_of_isNilpotent_mapQ (p : Submodule R
     have hz := LinearMap.congr_fun hn (p.mkQ y)
     rw [← p.mapQ_pow hp n] at hz
     simpa only [Submodule.mkQ_apply, Submodule.mapQ_apply, LinearMap.zero_apply] using hz
-  have hpow (k : ℕ) (x : p) : (((f.restrict hp) ^ k) x : V) = (f ^ k) x := by
-    induction k generalizing x with
-    | zero => rfl
-    | succ k ih => rw [pow_succ, pow_succ, mul_apply_eq_comp, mul_apply_eq_comp, ih]; rfl
   have h := congrArg Subtype.val (LinearMap.congr_fun hm ⟨(f ^ n) y, hymem⟩)
-  rw [hpow] at h
-  simpa using h
+  rwa [Module.End.pow_restrict, LinearMap.restrict_apply] at h
 
 end Submodule
