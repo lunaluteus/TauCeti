@@ -227,11 +227,7 @@ theorem globalArtinMap_ideal (v : HeightOneSpectrum (𝓞 K))
     globalArtinMap K L ι (.ofMul (primeIdeleClass K v)) =
       .ofMul (Abelianization.of
         (NumberFieldArithmetic.artinHomAway algEquiv_commute_of_isAbelianGalois S hur I)) := by
-  -- `I` is prime to `S` and has multiplicity one at `v`, so `v ∉ S`.
-  have hv : v ∉ S := fun h ↦ by
-    have := NumberFieldArithmetic.mem_idealsAway_iff.1 I.2 v h
-    rw [hI, FractionalIdeal.count_self] at this
-    exact one_ne_zero this
+  have hv : v ∉ S := NumberFieldArithmetic.notMem_of_coe_eq_asIdeal I hI
   obtain ⟨Q, _, _⟩ := (inferInstance : Nonempty (v.asIdeal.primesOver (𝓞 L)))
   have := hur v hv Q
   obtain ⟨σ, hσ⟩ := NumberField.exists_isArithFrobAt K Q

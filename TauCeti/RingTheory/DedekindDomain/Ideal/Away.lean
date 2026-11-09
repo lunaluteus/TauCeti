@@ -88,6 +88,16 @@ theorem mem_idealsAway_iff {S : Finset (HeightOneSpectrum R)}
       ∀ v ∈ S, FractionalIdeal.count K v (I : FractionalIdeal R⁰ K) = 0 :=
   Iff.rfl
 
+/-- An element of `idealsAway K S` whose underlying fractional ideal is a prime `v` has `v ∉ S`,
+because it has multiplicity one at `v` and multiplicity zero on `S`. -/
+theorem notMem_of_coe_eq_asIdeal {S : Finset (HeightOneSpectrum R)}
+    (I : idealsAway K S) {v : HeightOneSpectrum R}
+    (hI : ((I : (FractionalIdeal R⁰ K)ˣ) : FractionalIdeal R⁰ K) =
+      (v.asIdeal : FractionalIdeal R⁰ K)) : v ∉ S := fun h ↦ by
+  have := mem_idealsAway_iff.1 I.2 v h
+  rw [hI, FractionalIdeal.count_self] at this
+  exact one_ne_zero this
+
 variable (K) in
 /-- Ideals away from the empty set are canonically all invertible fractional ideals. -/
 def idealsAwayEmptyEquiv :
