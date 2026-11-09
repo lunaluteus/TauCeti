@@ -181,7 +181,6 @@ theorem im_exp_neg_mul_schwarzChristoffelVertex_sub_pos_of_long_turn
   classical
   let θj := schwarzChristoffelEdgeAngle a e (a j.castSucc)
   let u := Complex.exp (-θj * Complex.I)
-  let Vinf := schwarzChristoffelVertexAtInfinity a e z₀
   have hangle := schwarzChristoffelEdgeAngle_comp_strictMono a e ha fun k ↦ (he k).2
   have hjlast : j.castSucc < Fin.last n := Fin.mk_lt_mk.mpr j.isLt
   have hθjneg : θj < 0 := by
@@ -196,7 +195,8 @@ theorem im_exp_neg_mul_schwarzChristoffelVertex_sub_pos_of_long_turn
   have hθjlower : -Real.pi < θj := by
     dsimp only [θj]
     linarith
-  have hclose := im_exp_neg_mul_closing_pos a e z₀ ha (fun k ↦ (he k).1) hsum θj hθjneg hθjlower
+  have hclose := im_exp_neg_mul_schwarzChristoffelVertex_zero_sub_last_pos a e z₀ ha
+    (fun k ↦ (he k).1) hsum θj hθjneg hθjlower
   -- The early bounded edges are read one full turn later, so their adjusted angles lie in
   -- `(0, π)` relative to side `j`.
   have hleft := im_exp_neg_mul_vertex_sub_nonneg_of_long_turn a e z₀ ha he hsum i j hij hlong
@@ -217,8 +217,7 @@ theorem im_exp_neg_mul_schwarzChristoffelVertex_sub_pos_of_long_turn
           schwarzChristoffelVertex a e z₀ j.succ =
         (schwarzChristoffelVertex a e z₀ i.castSucc -
           schwarzChristoffelVertex a e z₀ 0) +
-        ((schwarzChristoffelVertex a e z₀ 0 - Vinf) +
-          (Vinf - schwarzChristoffelVertex a e z₀ (Fin.last n))) +
+        (schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertex a e z₀ (Fin.last n)) +
         (schwarzChristoffelVertex a e z₀ (Fin.last n) -
           schwarzChristoffelVertex a e z₀ j.succ) := by
     abel

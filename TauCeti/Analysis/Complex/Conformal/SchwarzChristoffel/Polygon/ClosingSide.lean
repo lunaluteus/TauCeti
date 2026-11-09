@@ -313,7 +313,7 @@ theorem im_schwarzChristoffelBoundary_first_lt (a e : Fin (n + 1) → ℝ)
 
 /-- Under the closing-side hypotheses, the unbounded piece of the boundary leaving the last bounded
 vertex points along the positive real axis. -/
-lemma vertexAtInfinity_sub_last_eq_norm
+lemma schwarzChristoffelVertexAtInfinity_sub_vertex_last_eq_norm
     (a e : Fin (n + 1) → ℝ) (z₀ : UpperHalfPlane) (ha : StrictMono a) (he : ∀ k, -1 < e k)
     (hsum : ∑ k, e k = -2) :
     schwarzChristoffelVertexAtInfinity a e z₀ - schwarzChristoffelVertex a e z₀ (Fin.last n) =
@@ -324,7 +324,7 @@ lemma vertexAtInfinity_sub_last_eq_norm
 
 /-- Under the closing-side hypotheses, the unbounded piece of the boundary arriving at the first
 bounded vertex points along the positive real axis. -/
-lemma vertex_zero_sub_vertexAtInfinity_eq_norm
+lemma schwarzChristoffelVertex_zero_sub_vertexAtInfinity_eq_norm
     (a e : Fin (n + 1) → ℝ) (z₀ : UpperHalfPlane) (ha : StrictMono a) (he : ∀ k, -1 < e k)
     (hsum : ∑ k, e k = -2) :
     schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertexAtInfinity a e z₀ =
@@ -334,16 +334,17 @@ lemma vertex_zero_sub_vertexAtInfinity_eq_norm
 
 /-- Both pieces incident to infinity point along the positive real axis when the total exponent
 is `-2`, so their sum, rotated by `-θ` with `θ ∈ (-π, 0)`, has strictly positive height. -/
-lemma im_exp_neg_mul_closing_pos
+lemma im_exp_neg_mul_schwarzChristoffelVertex_zero_sub_last_pos
     (a e : Fin (n + 1) → ℝ) (z₀ : UpperHalfPlane) (ha : StrictMono a) (he : ∀ k, -1 < e k)
     (hsum : ∑ k, e k = -2) (θ : ℝ) (hθ₀ : θ < 0) (hθπ : -Real.pi < θ) :
     0 < (Complex.exp (-θ * Complex.I) *
-      ((schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertexAtInfinity a e z₀) +
-        (schwarzChristoffelVertexAtInfinity a e z₀ -
-          schwarzChristoffelVertex a e z₀ (Fin.last n)))).im := by
+      (schwarzChristoffelVertex a e z₀ 0 - schwarzChristoffelVertex a e z₀ (Fin.last n))).im := by
   have hlt := schwarzChristoffelVertex_last_lt_vertexAtInfinity_lt_vertex_zero a e z₀ ha he hsum
-  rw [vertex_zero_sub_vertexAtInfinity_eq_norm a e z₀ ha he hsum,
-    vertexAtInfinity_sub_last_eq_norm a e z₀ ha he hsum, mul_add, Complex.add_im,
+  rw [← sub_add_sub_cancel (schwarzChristoffelVertex a e z₀ 0)
+    (schwarzChristoffelVertexAtInfinity a e z₀) (schwarzChristoffelVertex a e z₀ (Fin.last n)),
+    schwarzChristoffelVertex_zero_sub_vertexAtInfinity_eq_norm a e z₀ ha he hsum,
+    schwarzChristoffelVertexAtInfinity_sub_vertex_last_eq_norm a e z₀ ha he hsum, mul_add,
+    Complex.add_im,
     ← Complex.ofReal_neg θ]
   simp only [Complex.mul_im, Complex.exp_ofReal_mul_I_im, Complex.exp_ofReal_mul_I_re,
     Complex.ofReal_re, Complex.ofReal_im, mul_zero, zero_add]
