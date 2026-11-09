@@ -11,10 +11,10 @@ public import Mathlib.RingTheory.Nilpotent.Defs
 /-!
 # Nilpotent endomorphisms and quotients
 
-An endomorphism that vanishes on an invariant submodule `p` and induces a nilpotent endomorphism
-of the quotient by `p` is nilpotent (`Submodule.isNilpotent_of_isNilpotent_mapQ`). This is the
-converse direction of Mathlib's `Module.End.IsNilpotent.mapQ`, which passes nilpotence to the
-quotient.
+An endomorphism that is nilpotent on an invariant submodule `p` and induces a nilpotent
+endomorphism of the quotient by `p` is nilpotent
+(`Submodule.isNilpotent_of_isNilpotent_restrict_of_isNilpotent_mapQ`). This is the converse
+direction of Mathlib's `Module.End.IsNilpotent.mapQ`, which passes nilpotence to the quotient.
 -/
 
 public section
@@ -23,20 +23,27 @@ namespace Submodule
 
 variable {R V : Type*} [Ring R] [AddCommGroup V] [Module R V]
 
-/-- An endomorphism that vanishes on an invariant submodule and induces a nilpotent endomorphism
-of the quotient is nilpotent. -/
-theorem isNilpotent_of_isNilpotent_mapQ (p : Submodule R V)
-    (f : Module.End R V) (hp : p ≤ p.comap f) (hzero : ∀ y ∈ p, f y = 0)
+/-- An endomorphism that is nilpotent on an invariant submodule and induces a nilpotent
+endomorphism of the quotient is nilpotent. -/
+theorem isNilpotent_of_isNilpotent_restrict_of_isNilpotent_mapQ (p : Submodule R V)
+    (f : Module.End R V) (hp : p ≤ p.comap f) (hres : IsNilpotent (f.restrict hp))
     (hn : IsNilpotent (p.mapQ p f hp)) : IsNilpotent f := by
+  obtain ⟨m, hm⟩ := hres
   obtain ⟨n, hn⟩ := hn
-  refine ⟨n + 1, ?_⟩
+  refine ⟨m + n, ?_⟩
   ext y
-  rw [pow_succ', mul_apply_eq_comp]
+  rw [pow_add, mul_apply_eq_comp]
   have hymem : (f ^ n) y ∈ p := by
     apply (Submodule.Quotient.mk_eq_zero p).mp
     have hz := LinearMap.congr_fun hn (p.mkQ y)
     rw [← p.mapQ_pow hp n] at hz
     simpa only [Submodule.mkQ_apply, Submodule.mapQ_apply, LinearMap.zero_apply] using hz
-  rw [hzero _ hymem, LinearMap.zero_apply]
+  have hpow (k : ℕ) (x : p) : (((f.restrict hp) ^ k) x : V) = (f ^ k) x := by
+    induction k generalizing x with
+    | zero => rfl
+    | succ k ih => rw [pow_succ, pow_succ, mul_apply_eq_comp, mul_apply_eq_comp, ih]; rfl
+  have h := congrArg Subtype.val (LinearMap.congr_fun hm ⟨(f ^ n) y, hymem⟩)
+  rw [hpow] at h
+  simpa using h
 
 end Submodule

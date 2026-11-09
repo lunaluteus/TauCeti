@@ -95,12 +95,13 @@ end Module.End
 
 namespace Submodule
 
-variable {R V : Type*} [Ring R] [AddCommGroup V] [Module R V]
-
 /-- A submodule fixed pointwise by an endomorphism is invariant under it. -/
-theorem le_comap_of_fixed (p : Submodule R V) (f : Module.End R V)
+theorem le_comap_of_fixed {R V : Type*} [Semiring R] [AddCommMonoid V] [Module R V]
+    (p : Submodule R V) (f : Module.End R V)
     (hfix : ∀ y ∈ p, f y = y) : p ≤ p.comap f :=
   fun y hy ↦ by rw [Submodule.mem_comap, hfix y hy]; exact hy
+
+variable {R V : Type*} [Ring R] [AddCommGroup V] [Module R V]
 
 /-- A submodule invariant under an endomorphism `f` is also invariant under `f - 1`. -/
 theorem le_comap_sub_one (p : Submodule R V) (f : Module.End R V)

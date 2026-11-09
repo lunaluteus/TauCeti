@@ -54,8 +54,8 @@ section Quotient
 
 variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [Module R V]
 
-/-- On the quotient by an invariant submodule `p`, the operator `q g - 1` is induced by
-`rho g - 1`. -/
+/-- On the quotient by an invariant submodule `p`, the operator `rho.quotient p hp g - 1` is
+induced by `rho g - 1` via `Submodule.mapQ`. -/
 theorem _root_.Representation.quotient_sub_one_eq_mapQ (rho : Representation R G V)
     (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g)) (g : G) :
     rho.quotient p hp g - 1 = p.mapQ p (rho g - 1) (p.le_comap_sub_one (rho g) (hp g)) := by
@@ -76,9 +76,12 @@ theorem _root_.Representation.isNilpotent_sub_one_of_quotient
     (rho : Representation R G V) (p : Submodule R V) (hp : ∀ g, p ≤ p.comap (rho g))
     {g : G} (hfix : ∀ y ∈ p, rho g y = y) (hn : IsNilpotent (rho.quotient p hp g - 1)) :
     IsNilpotent (rho g - 1) := by
-  refine p.isNilpotent_of_isNilpotent_mapQ (rho g - 1) (p.le_comap_sub_one (rho g) (hp g))
-    (fun y hy ↦ by simp [hfix y hy]) ?_
-  rwa [rho.quotient_sub_one_eq_mapQ p hp g] at hn
+  refine p.isNilpotent_of_isNilpotent_restrict_of_isNilpotent_mapQ (rho g - 1)
+    (p.le_comap_sub_one (rho g) (hp g)) ?_ ?_
+  · convert IsNilpotent.zero
+    ext y
+    simp [hfix y y.2]
+  · rwa [rho.quotient_sub_one_eq_mapQ p hp g] at hn
 
 end Quotient
 
