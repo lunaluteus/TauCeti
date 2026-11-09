@@ -7,13 +7,12 @@ module
 
 public import TauCeti.Analysis.Calculus.Sard.VanishingDerivative
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
+import Mathlib.Analysis.LocallyConvex.SeparatingDual
 import Mathlib.Analysis.Normed.Module.HahnBanach
-import Mathlib.MeasureTheory.Measure.Prod
 import TauCeti.Analysis.Calculus.FDeriv.Comp
 import TauCeti.Analysis.Calculus.FDeriv.CriticalSet
 import TauCeti.Analysis.Normed.Operator.Splitting.Basic
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
-import TauCeti.MeasureTheory.Measure.Haar.Unique
 import TauCeti.MeasureTheory.Measure.LocallyNull
 
 /-!

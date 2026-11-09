@@ -11,7 +11,6 @@ public import Mathlib.Analysis.Calculus.FDeriv.Congr
 public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 public import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Invertible
 
-import Mathlib.Analysis.Calculus.FDeriv.Const
 import Mathlib.Tactic.Abel
 
 /-!
@@ -97,24 +96,25 @@ namespace ContinuousLinearMap
 open Function
 open scoped Topology
 
-variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {G₁ G₂ : Type*} [NormedAddCommGroup G₁] [NormedSpace ℝ G₁]
-  [NormedAddCommGroup G₂] [NormedSpace ℝ G₂]
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+  {E F : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+  {G₁ G₂ : Type*} [NormedAddCommGroup G₁] [NormedSpace 𝕜 G₁]
+  [NormedAddCommGroup G₂] [NormedSpace 𝕜 G₂]
 
 /-- A critical point of a map yields a critical point of its slice along a level set of a
-functional `φ`. Precisely, let `(φ, ρ)` split `F` as `ℝ × G`, let `γ` parametrize a family of
+functional `φ`. Precisely, let `(φ, ρ)` split `F` as `𝕜 × G`, let `γ` parametrize a family of
 points along which `φ ∘ f` is locally constant, and let `φ ∘ Df` be nonzero at `γ z`. If
 `ρ ∘ f ∘ γ` has surjective derivative at `z`, then `Df` is surjective at `γ z`; equivalently, if
 `γ z` is critical for `f`, then `z` is critical for the slice `ρ ∘ f ∘ γ`. -/
-theorem surjective_fderiv_of_surjective_fderiv_comp {f : E → F} {γ : G₁ → E} {z : G₁} {c : ℝ}
-    (φ : F →L[ℝ] ℝ) (ρ : F →L[ℝ] G₂) (eF : F ≃L[ℝ] ℝ × G₂) (heF : ∀ w, eF w = (φ w, ρ w))
-    (hγ : DifferentiableAt ℝ γ z) (hf : DifferentiableAt ℝ f (γ z))
+theorem surjective_fderiv_of_surjective_fderiv_comp {f : E → F} {γ : G₁ → E} {z : G₁} {c : 𝕜}
+    (φ : F →L[𝕜] 𝕜) (ρ : F →L[𝕜] G₂) (eF : F ≃L[𝕜] 𝕜 × G₂) (heF : ∀ w, eF w = (φ w, ρ w))
+    (hγ : DifferentiableAt 𝕜 γ z) (hf : DifferentiableAt 𝕜 f (γ z))
     (hconst : (fun w ↦ φ (f (γ w))) =ᶠ[𝓝 z] fun _ ↦ c)
-    (hne : ∃ v, φ (fderiv ℝ f (γ z) v) ≠ 0)
-    (hs : Surjective (fderiv ℝ (fun w ↦ ρ (f (γ w))) z)) : Surjective (fderiv ℝ f (γ z)) := by
-  set T : G₁ →L[ℝ] E := fderiv ℝ γ z
-  set A : E →L[ℝ] F := fderiv ℝ f (γ z)
+    (hne : ∃ v, φ (fderiv 𝕜 f (γ z) v) ≠ 0)
+    (hs : Surjective (fderiv 𝕜 (fun w ↦ ρ (f (γ w))) z)) : Surjective (fderiv 𝕜 f (γ z)) := by
+  set T : G₁ →L[𝕜] E := fderiv 𝕜 γ z
+  set A : E →L[𝕜] F := fderiv 𝕜 f (γ z)
   have hT : HasFDerivAt γ T z := hγ.hasFDerivAt
   have hA : HasFDerivAt f A (γ z) := hf.hasFDerivAt
   have hGd : HasFDerivAt (fun w ↦ ρ (f (γ w))) (ρ.comp (A.comp T)) z :=
@@ -125,7 +125,7 @@ theorem surjective_fderiv_of_surjective_fderiv_comp {f : E → F} {γ : G₁ →
     have hzero' : φ.comp (A.comp T) = 0 :=
       (hd.congr_of_eventuallyEq hconst.symm).unique (hasFDerivAt_const c z)
     intro w
-    simpa using congrArg (fun B : G₁ →L[ℝ] ℝ ↦ B w) hzero'
+    simpa using congrArg (fun B : G₁ →L[𝕜] 𝕜 ↦ B w) hzero'
   have hker : ∀ y, φ y = 0 → ∃ u, A u = y := by
     intro y hy
     obtain ⟨w, hw⟩ := hs (ρ y)

@@ -28,17 +28,18 @@ open Function Set
 
 namespace IsCompact
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [FiniteDimensional 𝕜 F]
 
 /-- The image of the critical points of `f` lying in a compact set `K` on which `f` and `Df` are
 continuous is compact, since the critical points form a closed set. -/
 theorem image_inter_setOf_not_surjective_fderiv {f : E → F} {K : Set E}
-    (hK : IsCompact K) (hf : ContinuousOn f K) (hf' : ContinuousOn (fderiv ℝ f) K) :
-    IsCompact (f '' ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K)) := by
-  have hCK : IsCompact ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K) := by
+    (hK : IsCompact K) (hf : ContinuousOn f K) (hf' : ContinuousOn (fderiv 𝕜 f) K) :
+    IsCompact (f '' ({x | ¬ Surjective (fderiv 𝕜 f x)} ∩ K)) := by
+  have hCK : IsCompact ({x | ¬ Surjective (fderiv 𝕜 f x)} ∩ K) := by
     refine hK.of_isClosed_subset ?_ inter_subset_right
-    have hclosed : IsClosed (K ∩ (fderiv ℝ f) ⁻¹' {A : E →L[ℝ] F | Surjective A}ᶜ) :=
+    have hclosed : IsClosed (K ∩ (fderiv 𝕜 f) ⁻¹' {A : E →L[𝕜] F | Surjective A}ᶜ) :=
       hf'.preimage_isClosed_of_isClosed hK.isClosed
         TauCeti.isOpen_setOf_surjective.isClosed_compl
     rwa [inter_comm] at hclosed
