@@ -273,9 +273,12 @@ theorem IsIntegral.covolume_eq_sqrt_card_discriminantGroup (h : IsIntegral L) :
     covolume L volume = Real.sqrt (Nat.card (DiscriminantGroup L)) :=
   inv_injective h.inv_covolume_eq_inv_sqrt_card_discriminantGroup
 
+omit [MeasurableSpace E] [BorelSpace E] in
 /-- The discriminant group of an integral lattice is finite. -/
-theorem IsIntegral.finite_discriminantGroup (h : IsIntegral L) : Finite (DiscriminantGroup L) :=
-  Nat.finite_of_card_ne_zero <| by
+theorem IsIntegral.finite_discriminantGroup (h : IsIntegral L) : Finite (DiscriminantGroup L) := by
+  -- The statement involves no measure; the comparison with `det L` uses the Borel volume.
+  borelize E
+  exact Nat.finite_of_card_ne_zero <| by
     exact_mod_cast h.det_eq_card_discriminantGroup ▸ (det_pos L).ne'
 
 /-- The determinant of an integral lattice is at least one: it is the order of the discriminant
@@ -285,7 +288,7 @@ theorem IsIntegral.one_le_det (h : IsIntegral L) : 1 ≤ det L := by
   rw [h.det_eq_card_discriminantGroup]
   exact_mod_cast Nat.card_pos
 
-omit [MeasurableSpace E] [BorelSpace E] in
+omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
 /-- For an integral full lattice `L`, the Gram matrix of a `ℤ`-basis `b` in the integer-valued
 inner product `IsIntegral.integralForm` has determinant `|L^∨ / L| = det L`. -/
 theorem IsIntegral.det_toMatrix_integralForm (h : IsIntegral L) {ι : Type*} [Fintype ι]
@@ -293,6 +296,14 @@ theorem IsIntegral.det_toMatrix_integralForm (h : IsIntegral L) {ι : Type*} [Fi
     (LinearMap.BilinForm.toMatrix b h.integralForm).det = Nat.card (DiscriminantGroup L) := by
   -- The statement involves no measure; the comparison with `det L` uses the Borel volume.
   borelize E
+  -- A full lattice with a finite `ℤ`-basis spans `E` over `ℝ` by finitely many vectors.
+  have : FiniteDimensional ℝ E := by
+    refine ⟨⟨(Set.finite_range fun i ↦ (b i : E)).toFinset, ?_⟩⟩
+    rw [Set.Finite.coe_toFinset, ← Submodule.span_span_of_tower ℤ ℝ,
+      ← IsZLattice.span_top (K := ℝ) (L := L)]
+    congr 2
+    have := congrArg (Submodule.map L.subtype) b.span_eq
+    rwa [Submodule.map_span, ← Set.range_comp, Submodule.map_top, Submodule.range_subtype] at this
   refine Int.cast_injective (α := ℝ) ?_
   rw [Int.cast_natCast, ← h.det_eq_card_discriminantGroup, det_eq_det_gram L b, Int.cast_det]
   congr 1
@@ -327,14 +338,61 @@ theorem IsEven.neg_one_pow_mul_card_discriminantGroup_modEq_zero_or_one (h : IsE
 
 /-! ### Unimodular lattices -/
 
+omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] [DiscreteTopology L]
+  [IsZLattice ℝ L] in
+/-- An integral lattice is discrete: its nonzero vectors have integer squared norm, hence norm at
+least one. -/
+theorem IsIntegral.discreteTopology (h : IsIntegral L) : DiscreteTopology L := by
+  refine discreteTopology_of_isOpen_singleton_zero ?_
+  rw [Metric.isOpen_singleton_iff]
+  refine ⟨1, one_pos, fun x hx ↦ ?_⟩
+  have hx1 : ‖(x : E)‖ < 1 := by simpa using hx
+  by_contra hx0
+  obtain ⟨m, hm⟩ := isIntegral_iff.1 h x.1 x.2 x.1 x.2
+  rw [real_inner_self_eq_norm_sq] at hm
+  have hpos : (0 : ℝ) < ‖(x : E)‖ := norm_pos_iff.2 fun h0 ↦ hx0 (Subtype.ext h0)
+  have hm0 : (0 : ℤ) < m := by exact_mod_cast hm ▸ pow_pos hpos 2
+  have hm1 : (1 : ℝ) ≤ m := by exact_mod_cast hm0
+  nlinarith
+
+omit [MeasurableSpace E] [BorelSpace E] [DiscreteTopology L] [IsZLattice ℝ L] in
+/-- A unimodular lattice in a finite-dimensional real inner product space spans the space: a
+nonzero vector `v` orthogonal to `L` would lie in `L = L^∨`, and so would all its real multiples,
+including one of squared norm `1 / 2`, which is not an integer. -/
+theorem IsUnimodular.span_eq_top (h : IsUnimodular L) : span ℝ (L : Set E) = ⊤ := by
+  by_contra hne
+  obtain ⟨v, hv, hv0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot
+    (mt Submodule.orthogonal_eq_bot_iff.1 hne)
+  have hmem (t : ℝ) : t • v ∈ L := by
+    rw [← h.dual_eq, mem_dual]
+    refine fun y hy ↦ ⟨0, ?_⟩
+    rw [real_inner_smul_left, real_inner_comm,
+      Submodule.inner_right_of_mem_orthogonal (subset_span hy) hv]
+    simp
+  have hnorm : (0 : ℝ) < ‖v‖ := norm_pos_iff.2 hv0
+  obtain ⟨m, hm⟩ := isIntegral_iff.1 h.isIntegral _ (hmem (1 / (√2 * ‖v‖))) _
+    (hmem (1 / (√2 * ‖v‖)))
+  rw [real_inner_smul_left, real_inner_smul_right, real_inner_self_eq_norm_sq] at hm
+  have h2 : (1 / (√2 * ‖v‖)) * ((1 / (√2 * ‖v‖)) * ‖v‖ ^ 2) = 1 / 2 := by
+    field_simp
+    rw [Real.sq_sqrt (by norm_num)]
+  rw [h2] at hm
+  have h3 : (2 : ℝ) * m = 1 := by linarith
+  have h4 : (2 : ℤ) * m = 1 := by exact_mod_cast h3
+  omega
+
+omit [DiscreteTopology L] [IsZLattice ℝ L] in
 /-- A unimodular lattice has covolume one. -/
 theorem IsUnimodular.covolume_eq_one (h : IsUnimodular L) : covolume L = 1 := by
+  have := h.isIntegral.discreteTopology
+  have : IsZLattice ℝ L := ⟨h.span_eq_top⟩
   have hdet : det L * det L = 1 := by
     conv_lhs => enter [1]; rw [isUnimodular_iff_eq_dual.mp h, det_dual]
     exact inv_mul_cancel₀ (det_pos L).ne'
   rwa [← sq, pow_eq_one_iff_of_nonneg (det_pos L).le two_ne_zero, det_def,
     pow_eq_one_iff_of_nonneg (covolume_pos L volume).le two_ne_zero] at hdet
 
+omit [DiscreteTopology L] [IsZLattice ℝ L] in
 /-- A unimodular lattice has determinant one. -/
 theorem IsUnimodular.det_eq_one (h : IsUnimodular L) : det L = 1 := by
   rw [det_def, h.covolume_eq_one, one_pow]
