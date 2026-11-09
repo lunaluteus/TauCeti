@@ -101,6 +101,8 @@ chart, as in Morse theory, are identified with the zeros of `mvfderiv`.
 * `MDifferentiableAt.differentiableWithinAt_fderivWithin_extChart_comp_eq_zero`: where the manifold
   differential vanishes at a point of differentiability, the coordinate expression in extended
   charts is differentiable within the model range with zero derivative.
+* `mdifferentiableAt_extChartAt_self`: on any charted space, the preferred extended chart is
+  differentiable at its base point.
 -/
 
 public section
@@ -792,3 +794,21 @@ theorem differentiableWithinAt_fderivWithin_extChart_comp_eq_zero {x : M} {u : E
 end MDifferentiableAt
 
 end ConstancyCoordinates
+
+section ExtChartAtBasePoint
+
+omit [IsManifold I 1 M] in
+/-- **The preferred extended chart is differentiable at its base point**, on any charted space:
+read in itself, the chart is the identity near the point, so no smoothness of the atlas is needed
+(Mathlib's `mdifferentiableAt_extChartAt` assumes `IsManifold I 1 M`). -/
+theorem mdifferentiableAt_extChartAt_self (x : M) :
+    MDifferentiableAt I 𝓘(𝕜, E) (extChartAt I x) x := by
+  rw [mdifferentiableAt_iff]
+  refine ⟨continuousAt_extChartAt x, ?_⟩
+  have h : writtenInExtChartAt I 𝓘(𝕜, E) x (extChartAt I x) =ᶠ[𝓝[range I] extChartAt I x x] id := by
+    filter_upwards [extChartAt_target_mem_nhdsWithin x] with y hy
+    exact writtenInExtChartAt_extChartAt hy
+  exact differentiableWithinAt_id.congr_of_eventuallyEq h (writtenInExtChartAt_extChartAt
+    (mem_extChartAt_target x))
+
+end ExtChartAtBasePoint
