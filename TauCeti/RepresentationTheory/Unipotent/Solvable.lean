@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Kolchin
+public import TauCeti.LinearAlgebra.End.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
 import Mathlib.RingTheory.Nilpotent.Lemmas
 import TauCeti.LinearAlgebra.ExtensionBasis
+import TauCeti.LinearAlgebra.Quotient.Nilpotent
 
 /-!
 # Solvability of faithful unipotent representations
@@ -25,8 +27,6 @@ submodule is `TauCeti.toMatrixAlgEquiv_extensionBasis_isUpperUnitriangular`, in
 
 ## Main declarations
 
-* `Submodule.isNilpotent_of_isNilpotent_mapQ`: an endomorphism vanishing on an invariant
-  submodule and nilpotent on the quotient is nilpotent.
 * `Representation.isNilpotent_quotient_sub_one`: unipotent operators stay unipotent on the
   quotient by an invariant submodule.
 * `Representation.isNilpotent_sub_one_of_quotient`: an operator that is unipotent on the quotient
@@ -53,34 +53,6 @@ namespace TauCeti
 section Quotient
 
 variable {R G V : Type*} [Ring R] [Monoid G] [AddCommGroup V] [Module R V]
-
-/-- A submodule fixed pointwise by an endomorphism is invariant under it. -/
-theorem _root_.Submodule.le_comap_of_fixed (p : Submodule R V) (f : Module.End R V)
-    (hfix : ∀ y ∈ p, f y = y) : p ≤ p.comap f :=
-  fun y hy ↦ by rw [Submodule.mem_comap, hfix y hy]; exact hy
-
-/-- A submodule invariant under an endomorphism `f` is also invariant under `f - 1`. -/
-theorem _root_.Submodule.le_comap_sub_one (p : Submodule R V) (f : Module.End R V)
-    (hp : p ≤ p.comap f) : p ≤ p.comap (f - 1) :=
-  fun x hx ↦ by
-    rw [Submodule.mem_comap, LinearMap.sub_apply, one_apply_eq_self]
-    exact p.sub_mem (Submodule.mem_comap.mp (hp hx)) hx
-
-/-- An endomorphism that vanishes on an invariant submodule and induces a nilpotent endomorphism
-of the quotient is nilpotent. -/
-theorem _root_.Submodule.isNilpotent_of_isNilpotent_mapQ (p : Submodule R V)
-    (f : Module.End R V) (hp : p ≤ p.comap f) (hzero : ∀ y ∈ p, f y = 0)
-    (hn : IsNilpotent (p.mapQ p f hp)) : IsNilpotent f := by
-  obtain ⟨n, hn⟩ := hn
-  refine ⟨n + 1, ?_⟩
-  ext y
-  rw [pow_succ', mul_apply_eq_comp]
-  have hymem : (f ^ n) y ∈ p := by
-    apply (Submodule.Quotient.mk_eq_zero p).mp
-    have hz := LinearMap.congr_fun hn (p.mkQ y)
-    rw [← p.mapQ_pow hp n] at hz
-    simpa only [Submodule.mkQ_apply, Submodule.mapQ_apply, LinearMap.zero_apply] using hz
-  rw [hzero _ hymem, LinearMap.zero_apply]
 
 /-- On the quotient by an invariant submodule `p`, the operator `q g - 1` is induced by
 `rho g - 1`. -/
