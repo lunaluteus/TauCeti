@@ -908,13 +908,14 @@ end ContinuousLinearMap
 
 section Approximation
 
-variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {u : X → ℝ}
+variable {X F : Type*} [MeasurableSpace X] {μ : Measure X} [NormedAddCommGroup F]
+  [NormedSpace ℝ F] {u : X → F}
 
 /-- The deviation of `u` from its mean over `T` on `A ⊆ U` is at most that of an approximation
 `v`, plus `(1 + μ(U) / μ(T))` times the `L¹(U)` distance from `v` to `u`, for `u` and `v`
 integrable on `U`. -/
 theorem setLIntegral_enorm_sub_setAverage_le_add_of_integrableOn {U T A : Set X}
-    (huU : IntegrableOn u U μ) {v : X → ℝ} (hvU : IntegrableOn v U μ) (hT : T ⊆ U) (hA : A ⊆ U) :
+    (huU : IntegrableOn u U μ) {v : X → F} (hvU : IntegrableOn v U μ) (hT : T ⊆ U) (hA : A ⊆ U) :
     ∫⁻ x in A, ‖u x - ⨍ y in T, u y ∂μ‖ₑ ∂μ ≤
       (∫⁻ x in U, ‖v x - u x‖ₑ ∂μ) +
         μ U / μ T * ∫⁻ x in U, ‖v x - u x‖ₑ ∂μ +
@@ -939,7 +940,7 @@ theorem setLIntegral_enorm_sub_setAverage_le_add_of_integrableOn {U T A : Set X}
         refine le_of_eq_of_le ?_
           ((enorm_add_le _ _).trans (add_le_add_left (enorm_add_le _ _) _))
         congr 1
-        ring
+        abel
     _ = ∫⁻ x in A, ‖v x - u x‖ₑ ∂μ + ∫⁻ x in A, ‖v x - ⨍ y in T, v y ∂μ‖ₑ ∂μ +
           ‖(⨍ y in T, v y ∂μ) - ⨍ y in T, u y ∂μ‖ₑ * μ A := by
         rw [lintegral_add_right _ measurable_const, lintegral_add_left' hdist,
