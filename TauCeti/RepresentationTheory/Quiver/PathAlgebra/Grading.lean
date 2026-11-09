@@ -689,7 +689,7 @@ end GradedAlgebra
 
 section IntegerGrade
 
-variable (k : Type w) (Q : Type u) [CommSemiring k] [Quiver.{v} Q]
+variable (k : Type w) (Q : Type u) [Semiring k] [Quiver.{v} Q]
 
 /-- The path-length grading of `kQ`, extended by zero from natural to integer degrees. This is the
 indexing used by graded-module shifts. -/
@@ -722,17 +722,23 @@ theorem integerGrade_zero_eq_span_range_vertexIdempotent :
 theorem isInternal_integerGrade : DirectSum.IsInternal (integerGrade k Q) :=
   Graded.isInternal_extendByZero_iff.2 (isInternal_grade k Q)
 
+end IntegerGrade
+
+section IntegerGradedAlgebra
+
+variable (k : Type w) (Q : Type u) [CommSemiring k] [Quiver.{v} Q]
+
 /-- The path algebra is integer graded by path length, with zero pieces in negative degrees. -/
 @[instance_reducible]
 noncomputable def integerGradedAlgebra [Finite Q] : GradedAlgebra (integerGrade k Q) :=
   let _ := gradedAlgebra k Q
   Graded.gradedAlgebraExtendByZero (grade k Q)
 
-end IntegerGrade
+end IntegerGradedAlgebra
 
 section OppositeGrade
 
-variable (k : Type w) (Q : Type u) [CommSemiring k] [Quiver.{v} Q]
+variable (k : Type w) (Q : Type u) [Semiring k] [Quiver.{v} Q]
 
 /-- Path length on the ordinary opposite path algebra. Reversing multiplication does not
 change degree, and introduces no Koszul sign. -/
@@ -745,6 +751,16 @@ theorem mem_opGrade_iff {n : ℕ} {x : (pathAlgebra k Q)ᵐᵒᵖ} :
     x ∈ opGrade k Q n ↔ x.unop ∈ grade k Q n := by
   simp [opGrade]
 
+/-- The opposite path-length pieces form an internal direct sum. -/
+theorem isInternal_opGrade : DirectSum.IsInternal (opGrade k Q) :=
+  (isInternal_grade k Q).map_linearEquiv (MulOpposite.opLinearEquiv k)
+
+end OppositeGrade
+
+section OppositeGradedMonoid
+
+variable (k : Type w) (Q : Type u) [CommSemiring k] [Quiver.{v} Q]
+
 /-- Multiplication in the ordinary opposite adds path lengths. -/
 instance opGrade.gradedMonoid [Finite Q] : SetLike.GradedMonoid (opGrade k Q) where
   one_mem := (mem_opGrade_iff k Q).2 (SetLike.one_mem_graded (grade k Q))
@@ -754,11 +770,7 @@ instance opGrade.gradedMonoid [Finite Q] : SetLike.GradedMonoid (opGrade k Q) wh
     exact SetLike.mul_mem_graded ((mem_opGrade_iff k Q).1 hy)
       ((mem_opGrade_iff k Q).1 hx)
 
-/-- The opposite path-length pieces form an internal direct sum. -/
-theorem isInternal_opGrade : DirectSum.IsInternal (opGrade k Q) :=
-  (isInternal_grade k Q).map_linearEquiv (MulOpposite.opLinearEquiv k)
-
-end OppositeGrade
+end OppositeGradedMonoid
 
 section OppositeGradedAlgebra
 
